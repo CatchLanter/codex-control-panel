@@ -3,6 +3,10 @@
 Codex 风格的本地桌面控制面板：在一个窗口里管理多个真实终端、浏览并继续 Codex
 对话、按终端独立控制权限模式，并快速切换 API、模型与推理强度。
 
+## 界面预览
+
+![Codex 控制面板主界面](docs/screenshot.png)
+
 ## 功能
 
 - 多终端：真实 cmd / PowerShell / PowerShell 7 / WSL 进程，标签页与网格两种排布
