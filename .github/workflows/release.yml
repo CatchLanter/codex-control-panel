@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Windows installer
         shell: pwsh
-        run: npx electron-builder --win
+        run: npx electron-builder --win --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
