@@ -1,0 +1,24 @@
+appId: com.local.codex-control-panel
+productName: Codex Control Panel
+directories:
+  output: release
+files:
+  - dist/**/*
+  - package.json
+asar: true
+asarUnpack:
+  - dist/**/*
+  - node_modules/@homebridge/node-pty-prebuilt-multiarch/**
+npmRebuild: false
+extraResources:
+  - from: build/node/node.exe
+    to: node/node.exe
+win:
+  icon: build/icon.ico
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

@@ -1,0 +1,205 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FitAddon } from '@xterm/addon-fit'
+import { Terminal } from '@xterm/xterm'
+import { SessionMeta } from '../../../shared/types'
+
+const THEMES = {
+  dark: {
+    background: '#111214',
+    foreground: '#d6d9dd',
+    cursor: '#f0f1f2',
+    selectionBackground: 'rgba(122, 162, 247, 0.25)',
+  },
+  light: {
+    background: '#fafafa',
+    foreground: '#1f2326',
+    cursor: '#111214',
+    selectionBackground: 'rgba(47, 111, 237, 0.18)',
+  },
+} as const
+
+interface MenuState {
+  x: number
+  y: number
+}
+
+export function TerminalPane({
+  meta,
+  visible,
+  theme,
+}: {
+  meta: SessionMeta
+  visible: boolean
+  theme: 'dark' | 'light'
+}) {
+  const hostRef = useRef<HTMLDivElement>(null)
+  const termRef = useRef<Terminal | null>(null)
+  const fitRef = useRef<FitAddon | null>(null)
+  const visibleRef = useRef(visible)
+  const [menu, setMenu] = useState<MenuState | null>(null)
+
+  visibleRef.current = visible
+
+  const doFit = useCallback(() => {
+    const host = hostRef.current
+    const term = termRef.current
+    const fit = fitRef.current
+    if (!host || !term || !fit || !visibleRef.current) return
+    if (host.offsetWidth === 0 || host.offsetHeight === 0) return
+    try {
+      fit.fit()
+      window.api.sessions.resize(meta.id, term.cols, term.rows)
+      term.scrollToBottom()
+      requestAnimationFrame(() => term.scrollToBottom())
+    } catch {
+      // terminal may be detaching
+    }
+  }, [meta.id])
+
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+
+    const term = new Terminal({
+      convertEol: true,
+      scrollback: 10000,
+      fontSize: 13,
+      fontFamily: '"Cascadia Mono", "Consolas", "Courier New", monospace',
+      cursorBlink: true,
+      theme: THEMES[theme],
+    })
+    const fit = new FitAddon()
+    term.loadAddon(fit)
+    term.open(host)
+    termRef.current = term
+    fitRef.current = fit
+
+    let disposed = false
+    let ready = false
+    const pending: string[] = []
+    const offData = window.api.onData(({ sessionId, data }) => {
+      if (sessionId !== meta.id) return
+      if (ready) term.write(data)
+      else pending.push(data)
+    })
+
+    void window.api.sessions.buffer(meta.id).then((buffer) => {
+      if (disposed) return
+      ready = true
+      const chunks = buffer ? [buffer, ...pending] : [...pending]
+      pending.length = 0
+      for (let index = 0; index < chunks.length; index += 1) {
+        const isLast = index === chunks.length - 1
+        term.write(
+          chunks[index],
+          isLast
+            ? () => {
+                if (!disposed) term.scrollToBottom()
+              }
+            : undefined,
+        )
+      }
+      requestAnimationFrame(() => {
+        if (!disposed) term.scrollToBottom()
+      })
+    })
+
+    const dataDisposable = term.onData((data) => {
+      window.api.sessions.write(meta.id, data)
+    })
+
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(doFit)
+    })
+    observer.observe(host)
+
+    if (visible) requestAnimationFrame(doFit)
+    term.focus()
+
+    return () => {
+      disposed = true
+      offData()
+      dataDisposable.dispose()
+      observer.disconnect()
+      term.dispose()
+      termRef.current = null
+      fitRef.current = null
+    }
+  }, [meta.id, theme, doFit])
+
+  useEffect(() => {
+    if (visible) {
+      requestAnimationFrame(doFit)
+      const timer = setTimeout(() => {
+        try {
+          termRef.current?.scrollToBottom()
+        } catch {
+          // terminal may be detaching
+        }
+      }, 80)
+      return () => clearTimeout(timer)
+    }
+  }, [visible, doFit])
+
+  useEffect(() => {
+    if (!menu) return
+    const close = () => setMenu(null)
+    window.addEventListener('mousedown', close)
+    return () => window.removeEventListener('mousedown', close)
+  }, [menu])
+
+  const copySelection = () => {
+    const term = termRef.current
+    if (!term?.hasSelection()) return
+    void navigator.clipboard.writeText(term.getSelection())
+    setMenu(null)
+  }
+
+  const paste = () => {
+    void navigator.clipboard.readText().then((text) => {
+      termRef.current?.paste(text)
+      termRef.current?.focus()
+    })
+    setMenu(null)
+  }
+
+  const clear = () => {
+    termRef.current?.clear()
+    setMenu(null)
+  }
+
+  return (
+    <div
+      className="pane-root"
+      onContextMenu={(event) => {
+        event.preventDefault()
+        setMenu({ x: event.clientX, y: event.clientY })
+      }}
+      onMouseDown={() => termRef.current?.focus()}
+    >
+      <div className="term-host" ref={hostRef} />
+      {meta.status !== 'running' && (
+        <div className="pane-overlay">
+          <span>进程已退出{meta.exitCode != null ? `（exit ${meta.exitCode}）` : ''}</span>
+        </div>
+      )}
+      {menu && (
+        <div
+          className="context-menu"
+          style={{ left: menu.x, top: menu.y }}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <button type="button" onClick={copySelection} disabled={!termRef.current?.hasSelection()}>
+            复制
+          </button>
+          <button type="button" onClick={paste}>
+            粘贴
+          </button>
+          <button type="button" onClick={clear}>
+            清屏
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

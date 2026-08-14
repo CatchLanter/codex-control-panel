@@ -1,0 +1,102 @@
+:root {
+  --font-ui:
+    'Segoe UI Variable', 'Segoe UI', system-ui, 'Microsoft YaHei UI',
+    'PingFang SC', sans-serif;
+  --font-mono: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --transition: 120ms ease;
+}
+
+.theme-dark {
+  --bg: #111214;
+  --bg-panel: #17181b;
+  --bg-elevated: #1e2024;
+  --bg-hover: #22252a;
+  --bg-active: #292d32;
+  --border: #2a2d32;
+  --border-strong: #3a3e45;
+  --text-primary: #f0f1f2;
+  --text-secondary: #b8bec6;
+  --text-tertiary: #838a93;
+  --accent-bg: #f0f1f2;
+  --accent-text: #101114;
+  --accent-hover: #ffffff;
+  --blue: #7aa2f7;
+  --green: #3fb68b;
+  --red: #e06c75;
+  --yellow: #d7ba7d;
+  --overlay: rgba(7, 8, 9, 0.62);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --terminal-bg: #111214;
+  color-scheme: dark;
+}
+
+.theme-light {
+  --bg: #fafafa;
+  --bg-panel: #ffffff;
+  --bg-elevated: #f2f3f5;
+  --bg-hover: #e9ebef;
+  --bg-active: #dfe3e8;
+  --border: #e2e4e8;
+  --border-strong: #cdd1d7;
+  --text-primary: #181a1d;
+  --text-secondary: #4b5159;
+  --text-tertiary: #7a828c;
+  --accent-bg: #181a1d;
+  --accent-text: #ffffff;
+  --accent-hover: #000000;
+  --blue: #2f6fed;
+  --green: #1f8f66;
+  --red: #c94f5c;
+  --yellow: #9a7b2f;
+  --overlay: rgba(30, 32, 36, 0.32);
+  --shadow: 0 12px 40px rgba(20, 24, 30, 0.18);
+  --terminal-bg: #fafafa;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
