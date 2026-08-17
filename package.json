@@ -1,6 +1,6 @@
 {
   "name": "codex-control-panel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Codex 风格控制面板：多 CMD 窗口、会话历史与 Codex 快捷操作",
   "main": "dist/main/index.js",
   "private": true,
