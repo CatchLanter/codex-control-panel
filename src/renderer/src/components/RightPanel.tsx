@@ -68,6 +68,9 @@ export function RightPanel({
     return activeSession.endedAt - activeSession.createdAt
   }, [activeSession, now])
 
+  const effortOptions =
+    codexConfig?.modelEfforts[codexConfig.model ?? ''] ?? EFFORT_OPTIONS
+
   const submitExec = () => {
     const prompt = execPrompt.trim()
     if (!prompt) return
@@ -258,13 +261,13 @@ export function RightPanel({
                   })
                 }}
               >
-                {EFFORT_OPTIONS.map((effort) => (
+                {effortOptions.map((effort) => (
                   <option key={effort} value={effort}>
                     {effort}
                   </option>
                 ))}
                 {codexConfig.reasoningEffort &&
-                  !EFFORT_OPTIONS.includes(codexConfig.reasoningEffort) && (
+                  !effortOptions.includes(codexConfig.reasoningEffort) && (
                     <option value={codexConfig.reasoningEffort}>
                       {codexConfig.reasoningEffort}
                     </option>

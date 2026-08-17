@@ -130,6 +130,7 @@ export interface CodexConfig {
   reasoningEffort: string | null
   providers: CodexApiProvider[]
   models: string[]
+  modelEfforts: Record<string, string[]>
   configPath: string | null
 }
 

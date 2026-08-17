@@ -243,6 +243,8 @@ export function readCodexConfig(): CodexConfig {
   let reasoningEffort: string | null = null
   let providers: ProviderSection[] = []
   let models: string[] = []
+  const modelEfforts: Record<string, string[]> = {}
+  const DEFAULT_EFFORTS = ['low', 'medium', 'high', 'max']
 
   try {
     const text = fs.readFileSync(target, 'utf8')
@@ -255,11 +257,18 @@ export function readCodexConfig(): CodexConfig {
     const catalog = modelsCatalogPath(text)
     if (catalog && fs.existsSync(catalog)) {
       const catalogData = JSON.parse(fs.readFileSync(catalog, 'utf8')) as {
-        models?: Array<{ slug?: string }>
+        models?: Array<{
+          slug?: string
+          supported_reasoning_levels?: Array<{ effort?: string }>
+        }>
       }
-      models = (catalogData.models ?? [])
-        .map((entry) => entry.slug)
-        .filter((slug): slug is string => Boolean(slug))
+      for (const entry of catalogData.models ?? []) {
+        if (!entry.slug) continue
+        models.push(entry.slug)
+        modelEfforts[entry.slug] = (entry.supported_reasoning_levels ?? [])
+          .map((level) => level.effort)
+          .filter((effort): effort is string => Boolean(effort))
+      }
     }
   } catch {
     // config may not exist
@@ -268,9 +277,13 @@ export function readCodexConfig(): CodexConfig {
   if (provider === 'deepseek') {
     for (const slug of ['deepseek-v4-flash', 'deepseek-v4-pro']) {
       if (!models.includes(slug)) models.unshift(slug)
+      if (!modelEfforts[slug]) modelEfforts[slug] = [...DEFAULT_EFFORTS]
     }
   }
-  if (model && !models.includes(model)) models.push(model)
+  if (model && !models.includes(model)) {
+    models.push(model)
+    modelEfforts[model] = [...DEFAULT_EFFORTS]
+  }
 
   return {
     provider,
@@ -278,6 +291,7 @@ export function readCodexConfig(): CodexConfig {
     reasoningEffort,
     providers,
     models,
+    modelEfforts,
     configPath: fs.existsSync(target) ? target : null,
   }
 }

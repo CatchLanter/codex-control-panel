@@ -86,7 +86,9 @@ export default function App() {
     )
       if (!session?.codexSession || session.status !== 'running') return
       const models = codexStore.config?.models ?? []
-      const effortList = ['low', 'medium', 'high', 'max']
+      const effortList =
+        codexStore.config?.modelEfforts[patch.model ?? ''] ??
+        ['low', 'medium', 'high', 'max']
       const modelIndex = patch.model ? models.indexOf(patch.model) : -1
       const effortIndex = patch.reasoningEffort
         ? effortList.indexOf(patch.reasoningEffort)
