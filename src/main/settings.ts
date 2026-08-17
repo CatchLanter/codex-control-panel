@@ -11,6 +11,7 @@ export const DEFAULT_QUICK_COMMANDS: QuickCommand[] = [
   { id: 'codex-mcp', label: 'codex mcp list', command: 'codex mcp list' },
   { id: 'codex-update', label: 'codex update', command: 'codex update' },
   { id: 'codex-login', label: 'codex login', command: 'codex login' },
+  { id: 'compact-context', label: '压缩上下文 /compact', command: '/compact' },
 ]
 
 const DEFAULT_SETTINGS: AppSettings = {
