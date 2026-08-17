@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
 import { SessionMeta } from '../../../shared/types'
+import { sanitizePtyData } from '../../../shared/pty-sanitize'
 
 const THEMES = {
   dark: {
@@ -81,19 +82,25 @@ export function TerminalPane({
     const pending: string[] = []
     const offData = window.api.onData(({ sessionId, data }) => {
       if (sessionId !== meta.id) return
-      if (ready) term.write(data)
-      else pending.push(data)
+      const clean = sanitizePtyData(data)
+      if (!clean) return
+      if (ready) term.write(clean)
+      else pending.push(clean)
     })
 
     void window.api.sessions.buffer(meta.id).then((buffer) => {
       if (disposed) return
       ready = true
-      const chunks = buffer ? [buffer, ...pending] : [...pending]
+      const chunks = buffer
+        ? [sanitizePtyData(buffer), ...pending]
+        : [...pending]
       pending.length = 0
       for (let index = 0; index < chunks.length; index += 1) {
         const isLast = index === chunks.length - 1
+        const clean = chunks[index]
+        if (!clean) continue
         term.write(
-          chunks[index],
+          clean,
           isLast
             ? () => {
                 if (!disposed) term.scrollToBottom()
@@ -127,7 +134,17 @@ export function TerminalPane({
       termRef.current = null
       fitRef.current = null
     }
-  }, [meta.id, theme, fontSize, doFit])
+    // Terminal instances are tied to a session, not to style changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meta.id, doFit])
+
+  useEffect(() => {
+    const term = termRef.current
+    if (!term) return
+    term.options.fontSize = fontSize
+    term.options.theme = THEMES[theme]
+    requestAnimationFrame(doFit)
+  }, [fontSize, theme, doFit])
 
   useEffect(() => {
     if (visible) {
@@ -206,7 +223,10 @@ export function TerminalPane({
       <div className="term-host" ref={hostRef} />
       {meta.status !== 'running' && (
         <div className="pane-overlay">
-          <span>进程已退出{meta.exitCode != null ? `（exit ${meta.exitCode}）` : ''}</span>
+          <span>
+            进程已退出
+            {meta.exitCode != null ? `（exit ${meta.exitCode}）` : ''}
+          </span>
         </div>
       )}
       {menu && (
@@ -215,7 +235,11 @@ export function TerminalPane({
           style={{ left: menu.x, top: menu.y }}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <button type="button" onClick={copySelection} disabled={!termRef.current?.hasSelection()}>
+          <button
+            type="button"
+            onClick={copySelection}
+            disabled={!termRef.current?.hasSelection()}
+          >
             复制
           </button>
           <button type="button" onClick={paste}>
