@@ -8,12 +8,14 @@ import { PtyClient } from './pty-client'
 import { SettingsStore } from './settings'
 import { createMainWindow, getMainWindow } from './window'
 import { HistoryEntry, SessionMeta } from '../shared/types'
+import { permissionFromCodexLabel } from '../shared/codex-modes'
 
 let ptyClient: PtyClient | null = null
 let historyStore: HistoryStore | null = null
 let settingsStore: SettingsStore | null = null
 let codexSessionsStore: CodexSessionsStore | null = null
 let quitting = false
+const permissionScanBuffers = new Map<string, string>()
 
 const gotLock = app.requestSingleInstanceLock()
 
@@ -39,9 +41,30 @@ if (!gotLock) {
       const win = getMainWindow()
       if (!win) return
       if (event === 'data') {
+        const sessionId = String(payload.sessionId)
+        const data = String(payload.data)
+        const combined = (
+          (permissionScanBuffers.get(sessionId) ?? '') + data
+        ).slice(-600)
+        permissionScanBuffers.set(sessionId, combined)
+        const cleaned = combined
+          .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, ' ')
+          .replace(/\x1b\][^\x07]*\x07/g, ' ')
+        const match = cleaned.match(/Permissions updated to\s+([^\n\r•]+)/i)
+        if (match) {
+          const permissions = permissionFromCodexLabel(match[1].trim())
+          if (permissions) {
+            void ptyClient?.setPermissions(sessionId, permissions)
+            win.webContents.send('terminal:permission', {
+              sessionId,
+              permissions,
+            })
+          }
+          permissionScanBuffers.set(sessionId, '')
+        }
         win.webContents.send('terminal:data', {
-          sessionId: payload.sessionId,
-          data: payload.data,
+          sessionId,
+          data,
         })
       } else if (event === 'exit') {
         void (async () => {

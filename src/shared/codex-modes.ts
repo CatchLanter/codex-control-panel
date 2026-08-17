@@ -58,3 +58,42 @@ export function codexResumeCommand(
   const target = sessionId ? `codex resume ${sessionId}` : 'codex resume --last'
   return applyCodexMode(target, permissions)
 }
+
+export function permissionFromCodexLabel(
+  label: string,
+): PermissionSettings | null {
+  const text = label.toLowerCase()
+  if (text.includes('read only')) {
+    return {
+      mode: 'plan',
+      customApproval: 'untrusted',
+      customSandbox: 'read-only',
+      customBypass: false,
+    }
+  }
+  if (text.includes('ask for approval')) {
+    return {
+      mode: 'default',
+      customApproval: 'on-request',
+      customSandbox: 'workspace-write',
+      customBypass: false,
+    }
+  }
+  if (text.includes('approve for me')) {
+    return {
+      mode: 'auto',
+      customApproval: 'never',
+      customSandbox: 'workspace-write',
+      customBypass: false,
+    }
+  }
+  if (text.includes('full access')) {
+    return {
+      mode: 'auto-unsafe',
+      customApproval: 'never',
+      customSandbox: 'danger-full-access',
+      customBypass: true,
+    }
+  }
+  return null
+}

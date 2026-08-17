@@ -40,6 +40,18 @@ export function useSessions(settings: AppSettings | null) {
     })
   }, [])
 
+  useEffect(() => {
+    return window.api.onPermissionChanged(({ sessionId, permissions }) => {
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId
+            ? { ...session, permissions: { ...permissions } }
+            : session,
+        ),
+      )
+    })
+  }, [])
+
   const addSession = useCallback((meta: SessionMeta) => {
     setSessions((prev) => [...prev, meta])
     setActiveId(meta.id)
@@ -98,6 +110,9 @@ export function useSessions(settings: AppSettings | null) {
         // permission flags while resuming the same conversation.
         window.api.sessions.write(id, '\x03')
         window.setTimeout(() => {
+          window.api.sessions.write(id, '\x03')
+        }, 1500)
+        window.setTimeout(() => {
           void window.api.codex
             .restartConversation({
               conversationId: current.conversationId,
@@ -106,7 +121,7 @@ export function useSessions(settings: AppSettings | null) {
             .then(({ command }) => {
               window.api.sessions.write(id, `${command}\r`)
             })
-        }, 2200)
+        }, 4000)
       }
     },
     [],

@@ -17,6 +17,7 @@ import {
   SessionMeta,
   TerminalDataPayload,
   TerminalExitPayload,
+  TerminalPermissionPayload,
 } from '../shared/types'
 
 const api: CodexPanelApi = {
@@ -124,6 +125,16 @@ const api: CodexPanelApi = {
     ) => cb(payload)
     ipcRenderer.on('terminal:exit', listener)
     return () => ipcRenderer.removeListener('terminal:exit', listener)
+  },
+  onPermissionChanged: (
+    cb: (payload: TerminalPermissionPayload) => void,
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: TerminalPermissionPayload,
+    ) => cb(payload)
+    ipcRenderer.on('terminal:permission', listener)
+    return () => ipcRenderer.removeListener('terminal:permission', listener)
   },
 }
 

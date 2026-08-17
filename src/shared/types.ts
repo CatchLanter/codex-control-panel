@@ -185,6 +185,11 @@ export interface TerminalExitPayload {
   exitCode: number
 }
 
+export interface TerminalPermissionPayload {
+  sessionId: string
+  permissions: PermissionSettings
+}
+
 export interface CodexPanelApi {
   sessions: {
     create: (opts: SessionCreateOptions) => Promise<SessionMeta>
@@ -241,4 +246,7 @@ export interface CodexPanelApi {
   }
   onData: (cb: (payload: TerminalDataPayload) => void) => () => void
   onExit: (cb: (payload: TerminalExitPayload) => void) => () => void
+  onPermissionChanged: (
+    cb: (payload: TerminalPermissionPayload) => void,
+  ) => () => void
 }
