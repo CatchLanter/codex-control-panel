@@ -81,9 +81,9 @@ export default function App() {
 
   const switchModelInTerminal = useCallback(
     (patch: CodexConfigPatch) => {
-    const session = sessionsStore.sessions.find(
-      (item) => item.id === sessionsStore.activeId,
-    )
+      const session = sessionsStore.sessions.find(
+        (item) => item.id === sessionsStore.activeId,
+      )
       if (!session?.codexSession || session.status !== 'running') return
       const models = codexStore.config?.models ?? []
       const effortList =
@@ -93,17 +93,42 @@ export default function App() {
       const effortIndex = patch.reasoningEffort
         ? effortList.indexOf(patch.reasoningEffort)
         : -1
+
       const write = (text: string) =>
         window.api.sessions.write(session.id, text)
+      let buffer = ''
+      let step = 0
+      let finished = false
+      const timers: number[] = []
+      const finish = () => {
+        if (finished) return
+        finished = true
+        offData()
+        for (const timer of timers) window.clearTimeout(timer)
+      }
+      const offData = window.api.onData(({ sessionId, data }) => {
+        if (sessionId !== session.id || finished) return
+        buffer = `${buffer}${data}`.slice(-2400)
+        if (step === 0 && /select model and effort/i.test(buffer)) {
+          step = 1
+          if (modelIndex >= 0) {
+            write(String(modelIndex + 1))
+            timers.push(window.setTimeout(() => write('\r'), 900))
+          }
+          if (modelIndex < 0) finish()
+        } else if (step === 1 && /reasoniglevel|reasoning level/i.test(buffer)) {
+          step = 2
+          if (effortIndex >= 0) {
+            write(String(effortIndex + 1))
+            timers.push(window.setTimeout(() => write('\r'), 700))
+          } else {
+            timers.push(window.setTimeout(() => write('\r'), 700))
+          }
+          finish()
+        }
+      })
       write('/model\r')
-      if (modelIndex >= 0) {
-        window.setTimeout(() => write(String(modelIndex + 1)), 6000)
-        window.setTimeout(() => write('\r'), 7600)
-      }
-      if (effortIndex >= 0) {
-        window.setTimeout(() => write(String(effortIndex + 1)), 11500)
-        window.setTimeout(() => write('\r'), 12800)
-      }
+      timers.push(window.setTimeout(finish, 20000))
     },
     [sessionsStore, codexStore],
   )
