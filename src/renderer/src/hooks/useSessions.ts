@@ -116,6 +116,8 @@ export function useSessions(settings: AppSettings | null) {
           void window.api.codex
             .restartConversation({
               conversationId: current.conversationId,
+              cwd: current.cwd,
+              after: current.createdAt,
               permissions,
             })
             .then(({ command }) => {

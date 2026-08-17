@@ -77,6 +77,15 @@ export async function releaseStaleWriterLock(
   }
 }
 
+export async function hasActiveWriterLock(
+  sessionId: string,
+): Promise<boolean> {
+  const lockDir = path.join(os.homedir(), '.codex', 'thread-writer-locks')
+  const lockFile = path.join(lockDir, `${sessionId}.lock`)
+  if (!fs.existsSync(lockFile)) return false
+  return hasActiveWriterProcess(sessionId)
+}
+
 export function killWriterProcesses(sessionId: string): Promise<number> {
   return new Promise((resolve) => {
     const script = [

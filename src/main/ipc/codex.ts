@@ -7,18 +7,26 @@ import {
   ResumeConversationOptions,
   RestartConversationOptions,
 } from '../../shared/types'
-import { codexResumeCommand } from '../../shared/codex-modes'
 import {
   addCodexProvider,
   currentModelProvider,
   deleteCodexConversation,
   detectCodex,
+  hasActiveWriterLock,
   killWriterProcesses,
   readCodexConfig,
   releaseStaleWriterLock,
   writeCodexConfig,
 } from '../codex'
 import type { IpcContext } from './types'
+
+function samePath(left?: string | null, right?: string | null): boolean {
+  const normalize = (value?: string | null) =>
+    (value ?? '').toLowerCase().replace(/[\\/]+$/, '')
+  const a = normalize(left)
+  const b = normalize(right)
+  return Boolean(a) && a === b
+}
 
 async function resumeCommand(
   ctx: IpcContext,
@@ -89,11 +97,25 @@ export function registerCodexIpc(ctx: IpcContext): void {
   ipcMain.handle(
     'codex:conversation:restart',
     async (_event, opts: RestartConversationOptions) => {
-      if (!opts.conversationId) {
-        return { command: codexResumeCommand(opts.permissions, null) }
+      let targetId = opts.conversationId
+      if (!targetId && opts.cwd) {
+        const threshold = (opts.after ?? Date.now()) - 2000
+        const entries = await ctx.codexSessions().list()
+        const recent = entries.find(
+          (entry) =>
+            samePath(entry.cwd, opts.cwd) &&
+            entry.createdAt >= threshold,
+        )
+        if (recent) targetId = recent.id
       }
-      await releaseStaleWriterLock(opts.conversationId)
-      const base = await resumeCommand(ctx, opts.conversationId)
+      if (!targetId) {
+        return { command: applyCodexMode('codex', opts.permissions) }
+      }
+      await releaseStaleWriterLock(targetId)
+      if (await hasActiveWriterLock(targetId)) {
+        return { command: applyCodexMode('codex', opts.permissions) }
+      }
+      const base = await resumeCommand(ctx, targetId)
       return { command: applyCodexMode(base, opts.permissions) }
     },
   )

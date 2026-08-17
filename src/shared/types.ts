@@ -168,6 +168,8 @@ export interface DeleteConversationResult {
 
 export interface RestartConversationOptions {
   conversationId: string | null
+  cwd?: string | null
+  after?: number
   permissions: PermissionSettings
 }
 
