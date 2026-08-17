@@ -136,7 +136,7 @@ export default function App() {
       },
       {
         id: 'clear-history',
-        label: '清空终端记录',
+        label: '清空终端输出记录',
         run: clearTerminalHistory,
       },
       { id: 'quit', label: '退出应用', run: () => window.api.app.quit() },

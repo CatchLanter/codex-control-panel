@@ -433,7 +433,10 @@ export function SettingsModal({
 
           <section className="settings-section">
             <h3>数据</h3>
-            <Field label="终端历史保留天数">
+            <p className="settings-hint">
+              以下设置只影响面板记录的终端输入/输出文本，不会清理 Codex 对话历史。
+            </p>
+            <Field label="终端输出保留天数">
               <input
                 type="number"
                 min={1}
@@ -454,7 +457,7 @@ export function SettingsModal({
               onClick={onClearHistory}
             >
               <IconTrash size={14} />
-              清空终端记录
+              清空终端输出记录
             </button>
           </section>
 
