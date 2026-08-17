@@ -67,10 +67,26 @@ export default function App() {
     void updateSettings({ layout: settings.layout === 'tabs' ? 'grid' : 'tabs' })
   }, [settings, updateSettings])
 
+  const createCodexSession = useCallback(() => {
+    if (!settings) return
+    void sessionsStore.createSession(
+      settings.defaultShell,
+      settings.defaultCwd,
+      'codex',
+      { ...settings.permissions },
+      true,
+    )
+  }, [settings, sessionsStore])
+
   const paletteActions: PaletteAction[] = useMemo(() => {
     if (!settings) return []
     const openCommand = (command: string) => () => runInNew(command)
     return [
+      {
+        id: 'new-codex',
+        label: '新建 Codex 窗口（自动）',
+        run: createCodexSession,
+      },
       {
         id: 'new-cmd',
         label: '新建 CMD 窗口',
@@ -125,7 +141,14 @@ export default function App() {
       },
       { id: 'quit', label: '退出应用', run: () => window.api.app.quit() },
     ]
-  }, [settings, sessionsStore, runInNew, toggleLayout, clearTerminalHistory])
+  }, [
+    settings,
+    sessionsStore,
+    runInNew,
+    toggleLayout,
+    clearTerminalHistory,
+    createCodexSession,
+  ])
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -224,6 +247,7 @@ export default function App() {
             onActivate={sessionsStore.setActiveId}
             onClose={(id) => void sessionsStore.closeSession(id)}
             onCreate={(shell) => void sessionsStore.createSession(shell)}
+            onCreateCodex={createCodexSession}
             onRename={(id, title) =>
               void sessionsStore.renameSession(id, title)
             }

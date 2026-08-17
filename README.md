@@ -9,16 +9,19 @@ Codex 风格的本地桌面控制面板：在一个窗口里管理多个真实�
 
 ## 功能
 
-- 多终端：真实 cmd / PowerShell / PowerShell 7 / WSL 进程，标签页与网格两种排布
+- 多终端：真实 cmd / PowerShell / PowerShell 7 / WSL 进程，标签页与网格两种排布；
+  新建终端可自动启动 Codex，也可手动选择空终端
 - Codex 对话历史：读取 `~/.codex/sessions`，显示对话标题，点击直接
   `codex resume <id>` 续聊，支持重命名与永久删除
 - 每终端独立权限模式：默认 / 计划（只读）/ 自动 / 完全自动 / 自定义；
-  运行中的 Codex 终端通过 `/plan`、`/auto`、`/permissions` 即时切换
-- API 与模型：在设置或右栏切换 API 服务（provider）、模型（如
+  切换权限时，运行中的 Codex 会话会在同一终端内自动重启，并用新参数继续原对话
+- API 与模型：在设置或右栏切换 API 服务、模型（如
   deepseek-v4-flash / deepseek-v4-pro）和推理强度（low/medium/high/max），
   支持添加自定义 API，写入 `~/.codex/config.toml`（自动备份 .bak）
-- 终端会话历史：输出自动落盘，可搜索、回放、导出、恢复
+- 终端体验：拖拽文件到终端自动填入路径、字号可调、自动滚到底部
+- 终端输出自动落盘，可在设置中一键清空
 - 无边框窗口：细标题栏 + 右上角原生风格最小化/最大化/关闭按钮
+- 设置面板按「权限与安全 / 终端 / 外观 / Codex 与模型 / 快捷键 / 数据」分类
 - 快捷键：命令面板、新建/关闭终端、切换标签等，全部可在设置中修改
 
 ## 架构
@@ -67,7 +70,7 @@ src/
   preload/               contextBridge 暴露的安全 API
   shared/                类型与纯工具（权限模式、快捷键）
   renderer/
-    src/hooks/           状态逻辑（settings/sessions/conversations/history/codex）
+    src/hooks/           状态逻辑（settings/sessions/conversations/codex）
     src/components/      UI 组件
 scripts/                 构建辅助、冒烟与端到端测试
 ```
@@ -79,7 +82,8 @@ npm install        # 安装依赖（postinstall 自动补齐 Windows PTY 预编�
 npm run dev        # Vite + 主进程编译 + Electron，热更新
 ```
 
-环境要求：Windows 10/11、Node.js 20+（终端守护进程用它运行）、本机安装 Codex CLI。
+环境要求：Windows 10/11、Node.js 20+（推荐 24，PTY 预编译二进制按当前 Node ABI
+自动下载）、本机安装 Codex CLI。
 
 ## 测试
 
@@ -88,7 +92,7 @@ npm run smoke      # 终端引擎冒烟测试：真实 cmd 收发 + 退出
 npm run e2e        # 端到端：客户端→守护进程→cmd 往返 + 进程树清理
 ```
 
-## 构建
+## 构建与发布
 
 ```bash
 npm run build      # 类型检查 + 打包渲染层与主进程
@@ -96,11 +100,14 @@ npm start          # 构建后直接运行
 npm run pack       # 用 electron-builder 生成 Windows 安装包（release/）
 ```
 
-打包前准备：
+本地打包前准备：
 
 - 把与终端守护进程同 ABI 的 Node 运行时放到 `build/node/node.exe`
   （本机 Node 24.15.0 即 ABI 137，与 node-pty 预编译二进制匹配）
 - 应用图标放到 `build/icon.ico`（Windows 安装包与桌面图标使用）
+
+发布到 GitHub Release：推送 `v*` 标签即可，GitHub Actions 会自动构建 Windows
+安装包并发布 Release；也可在 Actions 页面手动 Run workflow 只构建产物。
 
 ## 快捷键（默认，可在设置中修改）
 

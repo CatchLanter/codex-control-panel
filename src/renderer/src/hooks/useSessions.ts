@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { applyCodexMode, runtimePermissionCommand } from '../../../shared/codex-modes'
+import { applyCodexMode } from '../../../shared/codex-modes'
 import {
   AppSettings,
   PermissionSettings,
@@ -94,11 +94,19 @@ export function useSessions(settings: AppSettings | null) {
         ),
       )
       if (current.codexSession && current.status === 'running') {
-        const command = runtimePermissionCommand(
-          current.permissions,
-          permissions,
-        )
-        if (command) window.api.sessions.write(id, `${command}\r`)
+        // Exit the running Codex TUI, then relaunch it with the new
+        // permission flags while resuming the same conversation.
+        window.api.sessions.write(id, '\x03')
+        window.setTimeout(() => {
+          void window.api.codex
+            .restartConversation({
+              conversationId: current.conversationId,
+              permissions,
+            })
+            .then(({ command }) => {
+              window.api.sessions.write(id, `${command}\r`)
+            })
+        }, 2200)
       }
     },
     [],

@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import {
   AppSettings,
   AddApiProviderOptions,
@@ -10,6 +10,8 @@ import {
   DeleteConversationResult,
   PermissionSettings,
   ResumeConversationOptions,
+  RestartConversationOptions,
+  RestartConversationResult,
   RunCommandOptions,
   SessionCreateOptions,
   SessionMeta,
@@ -65,6 +67,10 @@ const api: CodexPanelApi = {
       ipcRenderer.invoke('codex:conversation:resume', opts),
     deleteConversation: (id: string): Promise<DeleteConversationResult> =>
       ipcRenderer.invoke('codex:conversation:delete', id),
+    restartConversation: (
+      opts: RestartConversationOptions,
+    ): Promise<RestartConversationResult> =>
+      ipcRenderer.invoke('codex:conversation:restart', opts),
     config: (): Promise<CodexConfig> => ipcRenderer.invoke('codex:config'),
     setConfig: (patch: CodexConfigPatch): Promise<CodexConfig> =>
       ipcRenderer.invoke('codex:config:set', patch),
@@ -78,6 +84,8 @@ const api: CodexPanelApi = {
   app: {
     openPath: (target: string): Promise<string> =>
       ipcRenderer.invoke('app:open-path', target),
+    getPathForFile: (file: unknown): string =>
+      webUtils.getPathForFile(file as File),
     quit: (): Promise<void> => ipcRenderer.invoke('app:quit'),
   },
   window: {

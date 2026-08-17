@@ -201,7 +201,7 @@ export function RightPanel({
               ))}
             </select>
             <div className="settings-hint">
-              权限独立于其他终端；若该终端正在运行 Codex，切换会立即同步。
+              权限独立于其他终端；若该终端正在运行 Codex，切换后会自动重启会话并应用新权限。
             </div>
           </>
         ) : (

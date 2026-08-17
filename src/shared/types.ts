@@ -101,6 +101,8 @@ export interface AppSettings {
   sidebarVisible: boolean
   rightPanelVisible: boolean
   theme: 'dark' | 'light'
+  terminalFontSize: number
+  autoStartCodex: boolean
   historyRetentionDays: number
   quickCommands: QuickCommand[]
   permissions: PermissionSettings
@@ -164,6 +166,15 @@ export interface DeleteConversationResult {
   output: string
 }
 
+export interface RestartConversationOptions {
+  conversationId: string | null
+  permissions: PermissionSettings
+}
+
+export interface RestartConversationResult {
+  command: string
+}
+
 export interface TerminalDataPayload {
   sessionId: string
   data: string
@@ -206,6 +217,9 @@ export interface CodexPanelApi {
       opts: ResumeConversationOptions,
     ) => Promise<SessionMeta>
     deleteConversation: (id: string) => Promise<DeleteConversationResult>
+    restartConversation: (
+      opts: RestartConversationOptions,
+    ) => Promise<RestartConversationResult>
     config: () => Promise<CodexConfig>
     setConfig: (patch: CodexConfigPatch) => Promise<CodexConfig>
     addProvider: (opts: AddApiProviderOptions) => Promise<CodexConfig>
@@ -215,6 +229,7 @@ export interface CodexPanelApi {
   }
   app: {
     openPath: (path: string) => Promise<string>
+    getPathForFile: (file: unknown) => string
     quit: () => Promise<void>
   }
   window: {

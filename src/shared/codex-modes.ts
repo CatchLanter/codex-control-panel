@@ -51,18 +51,10 @@ export function applyCodexMode(command: string, permissions: PermissionSettings)
     .join(' ')
 }
 
-export function runtimePermissionCommand(
-  from: PermissionSettings,
-  to: PermissionSettings,
-): string | null {
-  const fromMode = from.mode
-  const toMode = to.mode
-  if (toMode === 'plan' && fromMode !== 'plan') return '/plan'
-  if (toMode === 'auto' && fromMode !== 'auto') return '/auto'
-  if (toMode === 'default') {
-    if (fromMode === 'plan') return '/plan'
-    if (fromMode === 'auto') return '/auto'
-  }
-  if (toMode === 'auto-unsafe' || toMode === 'custom') return '/permissions'
-  return null
+export function codexResumeCommand(
+  permissions: PermissionSettings,
+  sessionId?: string | null,
+): string {
+  const target = sessionId ? `codex resume ${sessionId}` : 'codex resume --last'
+  return applyCodexMode(target, permissions)
 }

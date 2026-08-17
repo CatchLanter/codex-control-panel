@@ -27,10 +27,12 @@ export function TerminalPane({
   meta,
   visible,
   theme,
+  fontSize,
 }: {
   meta: SessionMeta
   visible: boolean
   theme: 'dark' | 'light'
+  fontSize: number
 }) {
   const hostRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
@@ -63,7 +65,7 @@ export function TerminalPane({
     const term = new Terminal({
       convertEol: true,
       scrollback: 10000,
-      fontSize: 13,
+      fontSize,
       fontFamily: '"Cascadia Mono", "Consolas", "Courier New", monospace',
       cursorBlink: true,
       theme: THEMES[theme],
@@ -125,7 +127,7 @@ export function TerminalPane({
       termRef.current = null
       fitRef.current = null
     }
-  }, [meta.id, theme, doFit])
+  }, [meta.id, theme, fontSize, doFit])
 
   useEffect(() => {
     if (visible) {
@@ -168,9 +170,33 @@ export function TerminalPane({
     setMenu(null)
   }
 
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const files = Array.from(event.dataTransfer.files ?? [])
+    if (!files.length) return
+    const paths: string[] = []
+    for (const file of files) {
+      try {
+        const path = window.api.app.getPathForFile(file)
+        if (path) paths.push(path)
+      } catch {
+        // ignore files without a local path
+      }
+    }
+    if (paths.length) {
+      termRef.current?.paste(paths.join(' '))
+      termRef.current?.focus()
+    }
+  }
+
   return (
     <div
       className="pane-root"
+      onDragOver={(event) => {
+        event.preventDefault()
+        event.dataTransfer.dropEffect = 'copy'
+      }}
+      onDrop={handleDrop}
       onContextMenu={(event) => {
         event.preventDefault()
         setMenu({ x: event.clientX, y: event.clientY })

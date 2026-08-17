@@ -215,10 +215,10 @@ export function SettingsModal({
         </div>
         <div className="settings-body">
           <section className="settings-section">
-            <h3>新窗口默认权限模式</h3>
+            <h3>权限与安全</h3>
             <p className="settings-hint">
               每个终端窗口的权限相互独立；新建窗口默认使用这里选择的模式。
-              当前终端的权限可在右栏单独调整。
+              当前终端的权限可在右栏单独调整；切换运行中的 Codex 会重启会话并应用新权限。
             </p>
             <div className="permission-modes">
               {PERMISSION_MODES.map((mode) => (
@@ -311,7 +311,7 @@ export function SettingsModal({
           </section>
 
           <section className="settings-section">
-            <h3>通用</h3>
+            <h3>终端</h3>
             <Field label="默认 Shell">
               <select
                 className="select"
@@ -351,6 +351,33 @@ export function SettingsModal({
                 </button>
               </div>
             </Field>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={settings.autoStartCodex}
+                onChange={(event) =>
+                  onSettingsChange({ autoStartCodex: event.target.checked })
+                }
+              />
+              <span>新建终端自动启动 Codex</span>
+            </label>
+            <Field label="终端字号（10–24）">
+              <input
+                type="number"
+                min={10}
+                max={24}
+                className="input"
+                value={settings.terminalFontSize}
+                onChange={(event) =>
+                  onSettingsChange({
+                    terminalFontSize: Math.max(
+                      10,
+                      Math.min(24, Number(event.target.value) || 13),
+                    ),
+                  })
+                }
+              />
+            </Field>
             <div className="settings-grid">
               <Field label="默认布局">
                 <select
@@ -383,36 +410,44 @@ export function SettingsModal({
                   ))}
                 </select>
               </Field>
-              <Field label="主题">
-                <select
-                  className="select"
-                  value={settings.theme}
-                  onChange={(event) =>
-                    onSettingsChange({
-                      theme: event.target.value as 'dark' | 'light',
-                    })
-                  }
-                >
-                  <option value="dark">深色</option>
-                  <option value="light">浅色</option>
-                </select>
-              </Field>
-              <Field label="历史保留天数">
-                <input
-                  type="number"
-                  min={1}
-                  max={3650}
-                  className="input"
-                  value={settings.historyRetentionDays}
-                  onChange={(event) =>
-                    onSettingsChange({
-                      historyRetentionDays:
-                        Number(event.target.value) || 30,
-                    })
-                  }
-                />
-              </Field>
             </div>
+          </section>
+
+          <section className="settings-section">
+            <h3>外观</h3>
+            <Field label="主题">
+              <select
+                className="select"
+                value={settings.theme}
+                onChange={(event) =>
+                  onSettingsChange({
+                    theme: event.target.value as 'dark' | 'light',
+                  })
+                }
+              >
+                <option value="dark">深色</option>
+                <option value="light">浅色</option>
+              </select>
+            </Field>
+          </section>
+
+          <section className="settings-section">
+            <h3>数据</h3>
+            <Field label="终端历史保留天数">
+              <input
+                type="number"
+                min={1}
+                max={3650}
+                className="input"
+                value={settings.historyRetentionDays}
+                onChange={(event) =>
+                  onSettingsChange({
+                    historyRetentionDays:
+                      Number(event.target.value) || 30,
+                  })
+                }
+              />
+            </Field>
             <button
               type="button"
               className="btn btn-danger"
@@ -424,7 +459,7 @@ export function SettingsModal({
           </section>
 
           <section className="settings-section">
-            <h3>API 与模型</h3>
+            <h3>Codex 与模型</h3>
             {codexConfig ? (
               <>
                 <Field label="API 服务">

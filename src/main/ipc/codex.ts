@@ -5,7 +5,9 @@ import {
   AddApiProviderOptions,
   CodexConfigPatch,
   ResumeConversationOptions,
+  RestartConversationOptions,
 } from '../../shared/types'
+import { codexResumeCommand } from '../../shared/codex-modes'
 import {
   addCodexProvider,
   currentModelProvider,
@@ -84,6 +86,17 @@ export function registerCodexIpc(ctx: IpcContext): void {
     await releaseStaleWriterLock(id)
     return deleteCodexConversation(id)
   })
+  ipcMain.handle(
+    'codex:conversation:restart',
+    async (_event, opts: RestartConversationOptions) => {
+      if (!opts.conversationId) {
+        return { command: codexResumeCommand(opts.permissions, null) }
+      }
+      await releaseStaleWriterLock(opts.conversationId)
+      const base = await resumeCommand(ctx, opts.conversationId)
+      return { command: applyCodexMode(base, opts.permissions) }
+    },
+  )
   ipcMain.handle('codex:open-config', async () => {
     const info = await detectCodex()
     if (info.configPath) {

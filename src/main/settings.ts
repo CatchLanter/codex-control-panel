@@ -21,6 +21,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   sidebarVisible: true,
   rightPanelVisible: true,
   theme: 'dark',
+  terminalFontSize: 13,
+  autoStartCodex: true,
   historyRetentionDays: 30,
   quickCommands: DEFAULT_QUICK_COMMANDS,
   permissions: {

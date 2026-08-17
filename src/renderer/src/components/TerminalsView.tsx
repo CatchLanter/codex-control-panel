@@ -27,6 +27,7 @@ export function TerminalsView({
   onActivate,
   onClose,
   onCreate,
+  onCreateCodex,
   onRename,
   onSettingsChange,
 }: {
@@ -37,6 +38,7 @@ export function TerminalsView({
   onActivate: (id: string) => void
   onClose: (id: string) => void
   onCreate: (shell: ShellKind) => void
+  onCreateCodex: () => void
   onRename: (id: string, title: string) => void
   onSettingsChange: (patch: Partial<AppSettings>) => void
 }) {
@@ -122,14 +124,29 @@ export function TerminalsView({
             <button
               type="button"
               className="btn btn-primary btn-sm"
-              onClick={() => setNewMenuOpen((v) => !v)}
+              onClick={() => {
+                if (settings.autoStartCodex) {
+                  onCreateCodex()
+                } else {
+                  setNewMenuOpen((v) => !v)
+                }
+              }}
             >
               <IconPlus size={14} />
-              新建
+              新建 Codex
               <IconChevronDown size={12} />
             </button>
             {newMenuOpen && (
               <div className="new-menu">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onCreateCodex()
+                    setNewMenuOpen(false)
+                  }}
+                >
+                  Codex（自动）
+                </button>
                 {SHELL_OPTIONS.map((option) => (
                   <button
                     type="button"
@@ -193,6 +210,7 @@ export function TerminalsView({
                   meta={session}
                   visible={isVisible}
                   theme={theme}
+                  fontSize={settings.terminalFontSize}
                 />
               </div>
             )
@@ -207,10 +225,17 @@ export function TerminalsView({
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => onCreate(settings.defaultShell)}
+            onClick={onCreateCodex}
           >
             <IconPlus size={14} />
-            新建 {settings.defaultShell.toUpperCase()} 窗口
+            新建 Codex 窗口
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => onCreate(settings.defaultShell)}
+          >
+            新建空终端
           </button>
         </div>
       )}
