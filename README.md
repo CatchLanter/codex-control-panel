@@ -13,8 +13,11 @@ Codex 风格的本地桌面控制面板：在一个窗口里管理多个真实�
   新建终端可自动启动 Codex，也可手动选择空终端
 - Codex 对话历史：读取 `~/.codex/sessions`，显示对话标题，点击直接
   `codex resume <id>` 续聊，支持重命名与永久删除
+- 对话隐藏：右键可将对话隐藏，列表与搜索中不再显示；侧栏底部隐藏入口可恢复，
+  不删除任何会话文件
 - 每终端独立权限模式：默认 / 计划（只读）/ 自动 / 完全自动 / 自定义；
-  切换权限时，运行中的 Codex 会话会在同一终端内自动重启，并用新参数继续原对话
+  切换权限时，运行中的 Codex 会话会在同一终端内自动重启，并用新参数继续原对话；
+  在 Codex 内手动 `/permissions` 切换时，面板状态会实时同步
 - API 与模型：在设置或右栏切换 API 服务、模型（如
   deepseek-v4-flash / deepseek-v4-pro）和推理强度（low/medium/high/max），
   支持添加自定义 API，写入 `~/.codex/config.toml`（自动备份 .bak）
@@ -124,6 +127,7 @@ npm run pack       # 用 electron-builder 生成 Windows 安装包（release/）
 
 - 应用设置与终端历史：`%APPDATA%\codex-control-panel\data\`
 - Codex 配置（API/模型切换实际写入这里）：`%USERPROFILE%\.codex\config.toml`
+- 对话隐藏标记：`%APPDATA%\codex-control-panel\data\codex-hidden.json`
 
 ## 隐私说明
 
