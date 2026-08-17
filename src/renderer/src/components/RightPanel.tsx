@@ -30,8 +30,7 @@ export function RightPanel({
   codex,
   codexConfig,
   onRefreshCodex,
-  onConfigChange,
-  onOpenModelPicker,
+  onApplyModelConfig,
   onRunInNew,
   onRunInActive,
   onOpenPath,
@@ -44,8 +43,7 @@ export function RightPanel({
   codex: CodexInfo | null
   codexConfig: CodexConfig | null
   onRefreshCodex: () => void
-  onConfigChange: (patch: CodexConfigPatch) => void
-  onOpenModelPicker: (patch: CodexConfigPatch) => void
+  onApplyModelConfig: (patch: CodexConfigPatch) => void
   onRunInNew: (command: string) => void
   onRunInActive: (command: string) => void
   onOpenPath: (path: string) => void
@@ -222,7 +220,7 @@ export function RightPanel({
                 className="select"
                 value={codexConfig.provider ?? ''}
                 onChange={(event) =>
-                  onConfigChange({ provider: event.target.value })
+                  onApplyModelConfig({ provider: event.target.value })
                 }
               >
                 {codexConfig.providers.map((provider) => (
@@ -239,8 +237,7 @@ export function RightPanel({
                 className="select"
                 value={codexConfig.model ?? ''}
                 onChange={(event) => {
-                  onConfigChange({ model: event.target.value })
-                  onOpenModelPicker({ model: event.target.value })
+                  onApplyModelConfig({ model: event.target.value })
                 }}
               >
                 {codexConfig.models.map((model) => (
@@ -255,8 +252,7 @@ export function RightPanel({
                 className="select"
                 value={codexConfig.reasoningEffort ?? 'high'}
                 onChange={(event) => {
-                  onConfigChange({ reasoningEffort: event.target.value })
-                  onOpenModelPicker({
+                  onApplyModelConfig({
                     reasoningEffort: event.target.value,
                   })
                 }}
@@ -275,8 +271,7 @@ export function RightPanel({
               </select>
             </Field>
             <div className="settings-hint">
-              修改会写入配置文件；若当前终端正在运行 Codex，将弹出官方
-              /model 选择器立即切换。
+              修改会写入配置文件；当前运行的 Codex 会话会自动重启并立即生效。
             </div>
             <button
               type="button"
@@ -287,14 +282,14 @@ export function RightPanel({
                 activeSession.status !== 'running'
               }
               onClick={() =>
-                onOpenModelPicker({
+                onApplyModelConfig({
                   model: codexConfig.model ?? undefined,
                   reasoningEffort:
                     codexConfig.reasoningEffort ?? undefined,
                 })
               }
             >
-              用 /model 切换当前会话
+              应用到当前会话
             </button>
           </>
         ) : (

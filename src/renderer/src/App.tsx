@@ -79,88 +79,15 @@ export default function App() {
     )
   }, [settings, sessionsStore])
 
-  const switchModelInTerminal = useCallback(
-    (patch: CodexConfigPatch) => {
+  const applyModelConfig = useCallback(
+    async (patch: CodexConfigPatch) => {
+      await codexStore.setModelConfig(patch)
       const session = sessionsStore.sessions.find(
         (item) => item.id === sessionsStore.activeId,
       )
-      if (!session?.codexSession || session.status !== 'running') return
-      const models = codexStore.config?.models ?? []
-      const effortList =
-        codexStore.config?.modelEfforts[patch.model ?? ''] ??
-        ['low', 'medium', 'high', 'max']
-      const currentModel = codexStore.config?.model
-      const currentEffort = codexStore.config?.reasoningEffort
-      const modelIndex = patch.model ? models.indexOf(patch.model) : -1
-      const currentModelIndex = currentModel
-        ? models.indexOf(currentModel)
-        : 0
-      const effortIndex = patch.reasoningEffort
-        ? effortList.indexOf(patch.reasoningEffort)
-        : -1
-      const currentEffortIndex = currentEffort
-        ? effortList.indexOf(currentEffort)
-        : 0
-      const modelDelta =
-        modelIndex >= 0 ? modelIndex - currentModelIndex : 0
-      const effortDelta =
-        effortIndex >= 0 ? effortIndex - currentEffortIndex : 0
-
-      const write = (text: string) =>
-        window.api.sessions.write(session.id, text)
-      let buffer = ''
-      let phase = 0
-      let finished = false
-      const timers: number[] = []
-      const finish = () => {
-        if (finished) return
-        finished = true
-        offData()
-        for (const timer of timers) window.clearTimeout(timer)
+      if (session?.codexSession && session.status === 'running') {
+        sessionsStore.restartSession(session.id)
       }
-      const pressArrows = (delta: number) => {
-        if (delta === 0) return
-        const key = delta < 0 ? '\x1b[A' : '\x1b[B'
-        let pressed = 0
-        const total = Math.abs(delta)
-        const tick = () => {
-          if (pressed >= total || finished) return
-          write(key)
-          pressed += 1
-          timers.push(window.setTimeout(tick, 350))
-        }
-        tick()
-      }
-      const offData = window.api.onData(({ sessionId, data }) => {
-        if (sessionId !== session.id || finished) return
-        buffer = `${buffer}${data}`.slice(-2400)
-        if (phase === 0 && /select model and effort/i.test(buffer)) {
-          phase = 1
-          pressArrows(modelDelta)
-          timers.push(
-            window.setTimeout(
-              () => write('\r'),
-              Math.abs(modelDelta) * 350 + 700,
-            ),
-          )
-        } else if (
-          phase === 1 &&
-          /reasoniglevel|reasoning level/i.test(buffer)
-        ) {
-          phase = 2
-          pressArrows(effortDelta)
-          timers.push(
-            window.setTimeout(
-              () => write('\r'),
-              Math.abs(effortDelta) * 350 + 700,
-            ),
-          )
-          timers.push(window.setTimeout(finish, 2500))
-        }
-      })
-      write('/model\r')
-      timers.push(window.setTimeout(() => write('\r'), 3200))
-      timers.push(window.setTimeout(finish, 30000))
     },
     [sessionsStore, codexStore],
   )
@@ -354,8 +281,7 @@ export default function App() {
             codex={codexStore.info}
             codexConfig={codexStore.config}
             onRefreshCodex={() => void codexStore.refresh()}
-            onConfigChange={(patch) => void codexStore.setModelConfig(patch)}
-            onOpenModelPicker={(patch) => switchModelInTerminal(patch)}
+            onApplyModelConfig={(patch) => void applyModelConfig(patch)}
             onRunInNew={(command) => void runInNew(command)}
             onRunInActive={sessionsStore.runInActive}
             onOpenPath={(path) => void window.api.app.openPath(path)}
@@ -390,7 +316,7 @@ export default function App() {
           settings={settings}
           codexConfig={codexStore.config}
           onSettingsChange={(patch) => void updateSettings(patch)}
-          onConfigChange={(patch) => void codexStore.setModelConfig(patch)}
+          onConfigChange={(patch) => void applyModelConfig(patch)}
           onAddProvider={(opts) => codexStore.addProvider(opts)}
           onClearHistory={clearTerminalHistory}
           onClose={() => setSettingsOpen(false)}

@@ -93,6 +93,33 @@ export function useSessions(settings: AppSettings | null) {
     )
   }, [])
 
+  const restartWithPermissions = useCallback(
+    (id: string, permissions: PermissionSettings) => {
+      const current = sessionsRef.current.find((session) => session.id === id)
+      if (!current?.codexSession || current.status !== 'running') return
+      // Exit the running Codex TUI, then relaunch it while resuming the
+      // same conversation. Model/API changes in config.toml are picked up
+      // by the relaunched session automatically.
+      window.api.sessions.write(id, '\x03')
+      window.setTimeout(() => {
+        window.api.sessions.write(id, '\x03')
+      }, 1500)
+      window.setTimeout(() => {
+        void window.api.codex
+          .restartConversation({
+            conversationId: current.conversationId,
+            cwd: current.cwd,
+            after: current.createdAt,
+            permissions,
+          })
+          .then(({ command }) => {
+            window.api.sessions.write(id, `${command}\r`)
+          })
+      }, 4000)
+    },
+    [],
+  )
+
   const setSessionPermission = useCallback(
     async (id: string, permissions: PermissionSettings) => {
       const current = sessionsRef.current.find((session) => session.id === id)
@@ -105,28 +132,17 @@ export function useSessions(settings: AppSettings | null) {
             : session,
         ),
       )
-      if (current.codexSession && current.status === 'running') {
-        // Exit the running Codex TUI, then relaunch it with the new
-        // permission flags while resuming the same conversation.
-        window.api.sessions.write(id, '\x03')
-        window.setTimeout(() => {
-          window.api.sessions.write(id, '\x03')
-        }, 1500)
-        window.setTimeout(() => {
-          void window.api.codex
-            .restartConversation({
-              conversationId: current.conversationId,
-              cwd: current.cwd,
-              after: current.createdAt,
-              permissions,
-            })
-            .then(({ command }) => {
-              window.api.sessions.write(id, `${command}\r`)
-            })
-        }, 4000)
-      }
+      restartWithPermissions(id, permissions)
     },
-    [],
+    [restartWithPermissions],
+  )
+
+  const restartSession = useCallback(
+    (id: string) => {
+      const current = sessionsRef.current.find((session) => session.id === id)
+      if (current) restartWithPermissions(id, current.permissions)
+    },
+    [restartWithPermissions],
   )
 
   const moveTab = useCallback((direction: 1 | -1) => {
@@ -161,6 +177,7 @@ export function useSessions(settings: AppSettings | null) {
     closeSession,
     renameSession,
     setSessionPermission,
+    restartSession,
     moveTab,
     runInActive,
   }
