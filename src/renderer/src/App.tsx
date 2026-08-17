@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { PERMISSION_MODE_LABELS } from '../../shared/codex-modes'
 import { shortcutMatches } from '../../shared/shortcuts'
+import type { CodexConfigPatch } from '../../shared/types'
 import {
   CommandPalette,
   PaletteAction,
@@ -78,14 +79,32 @@ export default function App() {
     )
   }, [settings, sessionsStore])
 
-  const openModelPicker = useCallback(() => {
+  const switchModelInTerminal = useCallback(
+    (patch: CodexConfigPatch) => {
     const session = sessionsStore.sessions.find(
       (item) => item.id === sessionsStore.activeId,
     )
-    if (session?.codexSession && session.status === 'running') {
-      window.api.sessions.write(session.id, '/model\r')
-    }
-  }, [sessionsStore])
+      if (!session?.codexSession || session.status !== 'running') return
+      const models = codexStore.config?.models ?? []
+      const effortList = ['low', 'medium', 'high', 'max']
+      const modelIndex = patch.model ? models.indexOf(patch.model) : -1
+      const effortIndex = patch.reasoningEffort
+        ? effortList.indexOf(patch.reasoningEffort)
+        : -1
+      const write = (text: string) =>
+        window.api.sessions.write(session.id, text)
+      write('/model\r')
+      if (modelIndex >= 0) {
+        window.setTimeout(() => write(String(modelIndex + 1)), 6000)
+        window.setTimeout(() => write('\r'), 7600)
+      }
+      if (effortIndex >= 0) {
+        window.setTimeout(() => write(String(effortIndex + 1)), 11500)
+        window.setTimeout(() => write('\r'), 12800)
+      }
+    },
+    [sessionsStore, codexStore],
+  )
 
   const paletteActions: PaletteAction[] = useMemo(() => {
     if (!settings) return []
@@ -277,7 +296,7 @@ export default function App() {
             codexConfig={codexStore.config}
             onRefreshCodex={() => void codexStore.refresh()}
             onConfigChange={(patch) => void codexStore.setModelConfig(patch)}
-            onOpenModelPicker={openModelPicker}
+            onOpenModelPicker={(patch) => switchModelInTerminal(patch)}
             onRunInNew={(command) => void runInNew(command)}
             onRunInActive={sessionsStore.runInActive}
             onOpenPath={(path) => void window.api.app.openPath(path)}

@@ -45,7 +45,7 @@ export function RightPanel({
   codexConfig: CodexConfig | null
   onRefreshCodex: () => void
   onConfigChange: (patch: CodexConfigPatch) => void
-  onOpenModelPicker: () => void
+  onOpenModelPicker: (patch: CodexConfigPatch) => void
   onRunInNew: (command: string) => void
   onRunInActive: (command: string) => void
   onOpenPath: (path: string) => void
@@ -237,7 +237,7 @@ export function RightPanel({
                 value={codexConfig.model ?? ''}
                 onChange={(event) => {
                   onConfigChange({ model: event.target.value })
-                  onOpenModelPicker()
+                  onOpenModelPicker({ model: event.target.value })
                 }}
               >
                 {codexConfig.models.map((model) => (
@@ -253,7 +253,9 @@ export function RightPanel({
                 value={codexConfig.reasoningEffort ?? 'high'}
                 onChange={(event) => {
                   onConfigChange({ reasoningEffort: event.target.value })
-                  onOpenModelPicker()
+                  onOpenModelPicker({
+                    reasoningEffort: event.target.value,
+                  })
                 }}
               >
                 {EFFORT_OPTIONS.map((effort) => (
@@ -281,7 +283,13 @@ export function RightPanel({
                 !activeSession.codexSession ||
                 activeSession.status !== 'running'
               }
-              onClick={onOpenModelPicker}
+              onClick={() =>
+                onOpenModelPicker({
+                  model: codexConfig.model ?? undefined,
+                  reasoningEffort:
+                    codexConfig.reasoningEffort ?? undefined,
+                })
+              }
             >
               用 /model 切换当前会话
             </button>
