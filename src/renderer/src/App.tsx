@@ -89,15 +89,27 @@ export default function App() {
       const effortList =
         codexStore.config?.modelEfforts[patch.model ?? ''] ??
         ['low', 'medium', 'high', 'max']
+      const currentModel = codexStore.config?.model
+      const currentEffort = codexStore.config?.reasoningEffort
       const modelIndex = patch.model ? models.indexOf(patch.model) : -1
+      const currentModelIndex = currentModel
+        ? models.indexOf(currentModel)
+        : 0
       const effortIndex = patch.reasoningEffort
         ? effortList.indexOf(patch.reasoningEffort)
         : -1
+      const currentEffortIndex = currentEffort
+        ? effortList.indexOf(currentEffort)
+        : 0
+      const modelDelta =
+        modelIndex >= 0 ? modelIndex - currentModelIndex : 0
+      const effortDelta =
+        effortIndex >= 0 ? effortIndex - currentEffortIndex : 0
 
       const write = (text: string) =>
         window.api.sessions.write(session.id, text)
       let buffer = ''
-      let step = 0
+      let phase = 0
       let finished = false
       const timers: number[] = []
       const finish = () => {
@@ -106,29 +118,49 @@ export default function App() {
         offData()
         for (const timer of timers) window.clearTimeout(timer)
       }
+      const pressArrows = (delta: number) => {
+        if (delta === 0) return
+        const key = delta < 0 ? '\x1b[A' : '\x1b[B'
+        let pressed = 0
+        const total = Math.abs(delta)
+        const tick = () => {
+          if (pressed >= total || finished) return
+          write(key)
+          pressed += 1
+          timers.push(window.setTimeout(tick, 350))
+        }
+        tick()
+      }
       const offData = window.api.onData(({ sessionId, data }) => {
         if (sessionId !== session.id || finished) return
         buffer = `${buffer}${data}`.slice(-2400)
-        if (step === 0 && /select model and effort/i.test(buffer)) {
-          step = 1
-          if (modelIndex >= 0) {
-            write(String(modelIndex + 1))
-            timers.push(window.setTimeout(() => write('\r'), 900))
-          }
-          if (modelIndex < 0) finish()
-        } else if (step === 1 && /reasoniglevel|reasoning level/i.test(buffer)) {
-          step = 2
-          if (effortIndex >= 0) {
-            write(String(effortIndex + 1))
-            timers.push(window.setTimeout(() => write('\r'), 700))
-          } else {
-            timers.push(window.setTimeout(() => write('\r'), 700))
-          }
-          finish()
+        if (phase === 0 && /select model and effort/i.test(buffer)) {
+          phase = 1
+          pressArrows(modelDelta)
+          timers.push(
+            window.setTimeout(
+              () => write('\r'),
+              Math.abs(modelDelta) * 350 + 700,
+            ),
+          )
+        } else if (
+          phase === 1 &&
+          /reasoniglevel|reasoning level/i.test(buffer)
+        ) {
+          phase = 2
+          pressArrows(effortDelta)
+          timers.push(
+            window.setTimeout(
+              () => write('\r'),
+              Math.abs(effortDelta) * 350 + 700,
+            ),
+          )
+          timers.push(window.setTimeout(finish, 2500))
         }
       })
       write('/model\r')
-      timers.push(window.setTimeout(finish, 20000))
+      timers.push(window.setTimeout(() => write('\r'), 3200))
+      timers.push(window.setTimeout(finish, 30000))
     },
     [sessionsStore, codexStore],
   )
