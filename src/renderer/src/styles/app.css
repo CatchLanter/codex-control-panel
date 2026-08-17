@@ -392,6 +392,38 @@
   flex: none;
 }
 
+.sidebar-footer {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 8px 6px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-hidden-toggle {
+  opacity: 0.28;
+}
+
+.sidebar:hover .sidebar-hidden-toggle,
+.sidebar-hidden-toggle:hover {
+  opacity: 1;
+}
+
+.hidden-badge {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg-active);
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.history-item-hidden .history-item-title,
+.history-item-hidden .history-item-cwd {
+  opacity: 0.65;
+}
+
 /* ---------- terminal area ---------- */
 
 .terminals {

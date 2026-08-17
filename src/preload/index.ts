@@ -62,6 +62,10 @@ const api: CodexPanelApi = {
       ipcRenderer.invoke('codex:conversations'),
     renameConversation: (id: string, title: string): Promise<boolean> =>
       ipcRenderer.invoke('codex:conversation:rename', id, title),
+    hideConversation: (id: string): Promise<boolean> =>
+      ipcRenderer.invoke('codex:conversation:hide', id),
+    unhideConversation: (id: string): Promise<boolean> =>
+      ipcRenderer.invoke('codex:conversation:unhide', id),
     resumeConversation: (
       opts: ResumeConversationOptions,
     ): Promise<SessionMeta> =>

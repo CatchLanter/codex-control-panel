@@ -153,6 +153,7 @@ export interface CodexConversation {
   createdAt: number
   lastActivity: number
   sizeBytes: number
+  hidden: boolean
 }
 
 export interface ResumeConversationOptions {
@@ -227,6 +228,8 @@ export interface CodexPanelApi {
     restartConversation: (
       opts: RestartConversationOptions,
     ) => Promise<RestartConversationResult>
+    hideConversation: (id: string) => Promise<boolean>
+    unhideConversation: (id: string) => Promise<boolean>
     config: () => Promise<CodexConfig>
     setConfig: (patch: CodexConfigPatch) => Promise<CodexConfig>
     addProvider: (opts: AddApiProviderOptions) => Promise<CodexConfig>

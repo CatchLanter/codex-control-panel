@@ -27,6 +27,7 @@ export class CodexSessionsStore {
   private readonly sessionsRoot: string
   private readonly indexFile: string
   private readonly overridesFile: string
+  private readonly hiddenFile: string
   private readonly providerCache = new Map<string, string>()
   private readonly fileCache = new Map<string, string>()
 
@@ -34,12 +35,14 @@ export class CodexSessionsStore {
     this.sessionsRoot = path.join(os.homedir(), '.codex', 'sessions')
     this.indexFile = path.join(os.homedir(), '.codex', 'session_index.jsonl')
     this.overridesFile = path.join(dataDir, 'codex-titles.json')
+    this.hiddenFile = path.join(dataDir, 'codex-hidden.json')
   }
 
   async list(): Promise<CodexConversation[]> {
     const files = this.collectRolloutFiles()
     const threadNames = this.readThreadNames()
     const overrides = this.readOverrides()
+    const hidden = new Set(this.readHidden())
     const conversations: CodexConversation[] = []
 
     for (const file of files) {
@@ -64,6 +67,7 @@ export class CodexSessionsStore {
           createdAt: meta.createdAt,
           lastActivity: stat.mtimeMs,
           sizeBytes: stat.size,
+          hidden: hidden.has(meta.sessionId),
         })
       } catch {
         // skip unreadable rollout
@@ -71,6 +75,18 @@ export class CodexSessionsStore {
     }
 
     return conversations.sort((a, b) => b.lastActivity - a.lastActivity)
+  }
+
+  hide(id: string): void {
+    const hidden = this.readHidden()
+    if (!hidden.includes(id)) {
+      hidden.push(id)
+      this.writeHidden(hidden)
+    }
+  }
+
+  unhide(id: string): void {
+    this.writeHidden(this.readHidden().filter((item) => item !== id))
   }
 
   rename(id: string, title: string): boolean {
@@ -302,5 +318,22 @@ export class CodexSessionsStore {
     } catch {
       return {}
     }
+  }
+
+  private readHidden(): string[] {
+    try {
+      const parsed = JSON.parse(
+        fs.readFileSync(this.hiddenFile, 'utf8'),
+      ) as string[]
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  private writeHidden(hidden: string[]): void {
+    const tmp = `${this.hiddenFile}.tmp`
+    fs.writeFileSync(tmp, JSON.stringify(hidden, null, 2), 'utf8')
+    fs.renameSync(tmp, this.hiddenFile)
   }
 }

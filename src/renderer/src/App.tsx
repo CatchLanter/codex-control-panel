@@ -236,6 +236,12 @@ export default function App() {
               void conversationsStore.renameConversation(id, title)
             }
             onDeleteConversation={conversationsStore.deleteConversation}
+            onHideConversation={(id) =>
+              void conversationsStore.hideConversation(id)
+            }
+            onUnhideConversation={(id) =>
+              void conversationsStore.unhideConversation(id)
+            }
           />
         )}
         <main className="center">

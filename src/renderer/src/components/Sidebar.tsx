@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CodexConversation } from '../../../shared/types'
 import { dayLabel, formatBytes, formatTime } from '../utils'
 import {
   IconEdit,
+  IconEye,
+  IconEyeOff,
   IconRefresh,
   IconSearch,
   IconSparkles,
@@ -15,32 +17,59 @@ interface ConversationGroup {
   entries: CodexConversation[]
 }
 
+interface MenuState {
+  x: number
+  y: number
+  id: string
+}
+
 export function Sidebar({
   conversations,
   onRefreshConversations,
   onResumeConversation,
   onRenameConversation,
   onDeleteConversation,
+  onHideConversation,
+  onUnhideConversation,
 }: {
   conversations: CodexConversation[]
   onRefreshConversations: () => void
   onResumeConversation: (conversation: CodexConversation) => void
   onRenameConversation: (id: string, title: string) => void
   onDeleteConversation: (conversation: CodexConversation) => void
+  onHideConversation: (id: string) => void
+  onUnhideConversation: (id: string) => void
 }) {
   const [query, setQuery] = useState('')
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
+  const [showHidden, setShowHidden] = useState(false)
+  const [menu, setMenu] = useState<MenuState | null>(null)
+
+  useEffect(() => {
+    if (!menu) return
+    const close = () => setMenu(null)
+    window.addEventListener('mousedown', close)
+    return () => window.removeEventListener('mousedown', close)
+  }, [menu])
+
+  const visibleConversations = useMemo(
+    () =>
+      showHidden
+        ? conversations
+        : conversations.filter((conversation) => !conversation.hidden),
+    [conversations, showHidden],
+  )
 
   const filteredConversations = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return conversations
-    return conversations.filter((conversation) =>
+    if (!q) return visibleConversations
+    return visibleConversations.filter((conversation) =>
       [conversation.title, conversation.cwd, conversation.id].some((field) =>
         field.toLowerCase().includes(q),
       ),
     )
-  }, [conversations, query])
+  }, [visibleConversations, query])
 
   const groups = useMemo<ConversationGroup[]>(() => {
     const map = new Map<string, CodexConversation[]>()
@@ -96,9 +125,19 @@ export function Sidebar({
             {group.entries.map((conversation) => (
               <div
                 key={conversation.id}
-                className="history-item"
-                title="点击进入对话"
+                className={`history-item ${
+                  conversation.hidden ? 'history-item-hidden' : ''
+                }`}
+                title="点击进入对话，右键更多操作"
                 onClick={() => onResumeConversation(conversation)}
+                onContextMenu={(event) => {
+                  event.preventDefault()
+                  setMenu({
+                    x: event.clientX,
+                    y: event.clientY,
+                    id: conversation.id,
+                  })
+                }}
               >
                 <div className="history-item-main">
                   {renamingId === conversation.id ? (
@@ -121,6 +160,9 @@ export function Sidebar({
                     <div className="history-item-title">
                       <span className="conversation-dot" />
                       {conversation.title}
+                      {conversation.hidden && (
+                        <span className="hidden-badge">已隐藏</span>
+                      )}
                     </div>
                   )}
                   <div className="history-item-cwd" title={conversation.cwd}>
@@ -161,6 +203,70 @@ export function Sidebar({
           </div>
         ))}
       </div>
+      <div className="sidebar-footer">
+        <IconButton
+          className="sidebar-hidden-toggle"
+          title={showHidden ? '收起隐藏的对话' : '查看隐藏的对话'}
+          aria-label="隐藏的对话"
+          onClick={() => setShowHidden((value) => !value)}
+        >
+          {showHidden ? <IconEyeOff size={14} /> : <IconEye size={14} />}
+        </IconButton>
+      </div>
+      {menu && (
+        <div
+          className="context-menu"
+          style={{ left: menu.x, top: menu.y }}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const conversation = conversations.find(
+                (item) => item.id === menu.id,
+              )
+              if (conversation) onResumeConversation(conversation)
+              setMenu(null)
+            }}
+          >
+            进入对话
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setRenamingId(menu.id)
+              const conversation = conversations.find(
+                (item) => item.id === menu.id,
+              )
+              if (conversation) setRenameDraft(conversation.title)
+              setMenu(null)
+            }}
+          >
+            重命名
+          </button>
+          {conversations.find((item) => item.id === menu.id)?.hidden ? (
+            <button
+              type="button"
+              onClick={() => {
+                onUnhideConversation(menu.id)
+                setMenu(null)
+              }}
+            >
+              取消隐藏
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                onHideConversation(menu.id)
+                setMenu(null)
+              }}
+            >
+              隐藏对话
+            </button>
+          )}
+        </div>
+      )}
     </aside>
   )
 }

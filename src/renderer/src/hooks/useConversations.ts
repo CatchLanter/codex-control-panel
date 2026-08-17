@@ -86,11 +86,35 @@ export function useConversations(
     [requestConfirm, refreshConversations],
   )
 
+  const hideConversation = useCallback(async (id: string) => {
+    await window.api.codex.hideConversation(id)
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.id === id
+          ? { ...conversation, hidden: true }
+          : conversation,
+      ),
+    )
+  }, [])
+
+  const unhideConversation = useCallback(async (id: string) => {
+    await window.api.codex.unhideConversation(id)
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.id === id
+          ? { ...conversation, hidden: false }
+          : conversation,
+      ),
+    )
+  }, [])
+
   return {
     conversations,
     refreshConversations,
     resumeConversation,
     renameConversation,
     deleteConversation,
+    hideConversation,
+    unhideConversation,
   }
 }

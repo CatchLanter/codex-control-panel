@@ -62,6 +62,14 @@ export function registerCodexIpc(ctx: IpcContext): void {
     (_event, id: string, title: unknown) =>
       ctx.codexSessions().rename(id, String(title)),
   )
+  ipcMain.handle('codex:conversation:hide', (_event, id: string) => {
+    ctx.codexSessions().hide(id)
+    return true
+  })
+  ipcMain.handle('codex:conversation:unhide', (_event, id: string) => {
+    ctx.codexSessions().unhide(id)
+    return true
+  })
   ipcMain.handle(
     'codex:conversation:resume',
     async (_event, opts: ResumeConversationOptions) => {
