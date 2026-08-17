@@ -31,6 +31,7 @@ export function RightPanel({
   codexConfig,
   onRefreshCodex,
   onConfigChange,
+  onOpenModelPicker,
   onRunInNew,
   onRunInActive,
   onOpenPath,
@@ -44,6 +45,7 @@ export function RightPanel({
   codexConfig: CodexConfig | null
   onRefreshCodex: () => void
   onConfigChange: (patch: CodexConfigPatch) => void
+  onOpenModelPicker: () => void
   onRunInNew: (command: string) => void
   onRunInActive: (command: string) => void
   onOpenPath: (path: string) => void
@@ -233,9 +235,10 @@ export function RightPanel({
               <select
                 className="select"
                 value={codexConfig.model ?? ''}
-                onChange={(event) =>
+                onChange={(event) => {
                   onConfigChange({ model: event.target.value })
-                }
+                  onOpenModelPicker()
+                }}
               >
                 {codexConfig.models.map((model) => (
                   <option key={model} value={model}>
@@ -248,9 +251,10 @@ export function RightPanel({
               <select
                 className="select"
                 value={codexConfig.reasoningEffort ?? 'high'}
-                onChange={(event) =>
+                onChange={(event) => {
                   onConfigChange({ reasoningEffort: event.target.value })
-                }
+                  onOpenModelPicker()
+                }}
               >
                 {EFFORT_OPTIONS.map((effort) => (
                   <option key={effort} value={effort}>
@@ -265,6 +269,22 @@ export function RightPanel({
                   )}
               </select>
             </Field>
+            <div className="settings-hint">
+              修改会写入配置文件；若当前终端正在运行 Codex，将弹出官方
+              /model 选择器立即切换。
+            </div>
+            <button
+              type="button"
+              className="btn btn-block"
+              disabled={
+                !activeSession ||
+                !activeSession.codexSession ||
+                activeSession.status !== 'running'
+              }
+              onClick={onOpenModelPicker}
+            >
+              用 /model 切换当前会话
+            </button>
           </>
         ) : (
           <div className="panel-empty">未读取到 Codex 配置</div>

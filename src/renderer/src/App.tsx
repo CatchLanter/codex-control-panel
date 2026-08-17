@@ -78,6 +78,15 @@ export default function App() {
     )
   }, [settings, sessionsStore])
 
+  const openModelPicker = useCallback(() => {
+    const session = sessionsStore.sessions.find(
+      (item) => item.id === sessionsStore.activeId,
+    )
+    if (session?.codexSession && session.status === 'running') {
+      window.api.sessions.write(session.id, '/model\r')
+    }
+  }, [sessionsStore])
+
   const paletteActions: PaletteAction[] = useMemo(() => {
     if (!settings) return []
     const openCommand = (command: string) => () => runInNew(command)
@@ -268,6 +277,7 @@ export default function App() {
             codexConfig={codexStore.config}
             onRefreshCodex={() => void codexStore.refresh()}
             onConfigChange={(patch) => void codexStore.setModelConfig(patch)}
+            onOpenModelPicker={openModelPicker}
             onRunInNew={(command) => void runInNew(command)}
             onRunInActive={sessionsStore.runInActive}
             onOpenPath={(path) => void window.api.app.openPath(path)}
