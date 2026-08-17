@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PERMISSION_MODE_LABELS } from '../../shared/codex-modes'
 import { shortcutMatches } from '../../shared/shortcuts'
 import type { CodexConfigPatch } from '../../shared/types'
@@ -22,6 +22,9 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [sessionModels, setSessionModels] = useState<
+    Record<string, { model: string; effort: string }>
+  >({})
 
   const { settings, updateSettings } = useSettings()
   const sessionsStore = useSessions(settings)
@@ -31,6 +34,15 @@ export default function App() {
     setConfirm,
   )
   const codexStore = useCodex()
+
+  useEffect(() => {
+    return window.api.onModelChanged(({ sessionId, model, effort }) => {
+      setSessionModels((prev) => ({
+        ...prev,
+        [sessionId]: { model, effort },
+      }))
+    })
+  }, [])
 
   const requestConfirm = useCallback((request: ConfirmRequest) => {
     setConfirm(request)
@@ -82,15 +94,20 @@ export default function App() {
   const applyModelConfig = useCallback(
     async (patch: CodexConfigPatch) => {
       await codexStore.setModelConfig(patch)
-      const session = sessionsStore.sessions.find(
-        (item) => item.id === sessionsStore.activeId,
-      )
-      if (session?.codexSession && session.status === 'running') {
-        sessionsStore.restartSession(session.id)
-      }
     },
-    [sessionsStore, codexStore],
+    [codexStore],
   )
+
+  const openModelPicker = useCallback(() => {
+    const session = sessionsStore.sessions.find(
+      (item) => item.id === sessionsStore.activeId,
+    )
+    if (!session?.codexSession || session.status !== 'running') return
+    window.api.sessions.write(session.id, '/model\r')
+    window.setTimeout(() => {
+      window.api.sessions.write(session.id, '\r')
+    }, 3200)
+  }, [sessionsStore])
 
   const paletteActions: PaletteAction[] = useMemo(() => {
     if (!settings) return []
@@ -278,10 +295,14 @@ export default function App() {
           <RightPanel
             settings={settings}
             activeSession={activeSession}
+            sessionModel={
+              activeSession ? sessionModels[activeSession.id] : undefined
+            }
             codex={codexStore.info}
             codexConfig={codexStore.config}
             onRefreshCodex={() => void codexStore.refresh()}
             onApplyModelConfig={(patch) => void applyModelConfig(patch)}
+            onOpenModelPicker={openModelPicker}
             onRunInNew={(command) => void runInNew(command)}
             onRunInActive={sessionsStore.runInActive}
             onOpenPath={(path) => void window.api.app.openPath(path)}

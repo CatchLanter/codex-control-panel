@@ -27,10 +27,12 @@ const EFFORT_OPTIONS = ['low', 'medium', 'high', 'max']
 export function RightPanel({
   settings,
   activeSession,
+  sessionModel,
   codex,
   codexConfig,
   onRefreshCodex,
   onApplyModelConfig,
+  onOpenModelPicker,
   onRunInNew,
   onRunInActive,
   onOpenPath,
@@ -40,10 +42,12 @@ export function RightPanel({
 }: {
   settings: AppSettings
   activeSession: SessionMeta | null
+  sessionModel?: { model: string; effort: string }
   codex: CodexInfo | null
   codexConfig: CodexConfig | null
   onRefreshCodex: () => void
   onApplyModelConfig: (patch: CodexConfigPatch) => void
+  onOpenModelPicker: () => void
   onRunInNew: (command: string) => void
   onRunInActive: (command: string) => void
   onOpenPath: (path: string) => void
@@ -215,6 +219,16 @@ export function RightPanel({
       <Section title="模型">
         {codexConfig ? (
           <>
+            <div className="info-row">
+              <span className="info-label">当前会话</span>
+              <span className="info-value">
+                {sessionModel
+                  ? `${sessionModel.model} ${sessionModel.effort}`
+                  : `${codexConfig.model ?? '—'} ${
+                      codexConfig.reasoningEffort ?? '—'
+                    }`}
+              </span>
+            </div>
             <Field label="API">
               <select
                 className="select"
@@ -271,7 +285,8 @@ export function RightPanel({
               </select>
             </Field>
             <div className="settings-hint">
-              修改会写入配置文件；当前运行的 Codex 会话会自动重启并立即生效。
+              下拉选择写入配置文件，用于新会话；当前会话请用下方按钮打开
+              官方 /model 选择器，不重启、立即生效。
             </div>
             <button
               type="button"
@@ -281,15 +296,9 @@ export function RightPanel({
                 !activeSession.codexSession ||
                 activeSession.status !== 'running'
               }
-              onClick={() =>
-                onApplyModelConfig({
-                  model: codexConfig.model ?? undefined,
-                  reasoningEffort:
-                    codexConfig.reasoningEffort ?? undefined,
-                })
-              }
+              onClick={onOpenModelPicker}
             >
-              应用到当前会话
+              打开 /model 选择器（当前会话）
             </button>
           </>
         ) : (

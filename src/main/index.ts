@@ -62,6 +62,15 @@ if (!gotLock) {
           }
           permissionScanBuffers.set(sessionId, '')
         }
+        const modelMatch = cleaned.match(/Model changed to\s+(\S+)\s+(\S+)/i)
+        if (modelMatch) {
+          win.webContents.send('terminal:model', {
+            sessionId,
+            model: modelMatch[1],
+            effort: modelMatch[2],
+          })
+          permissionScanBuffers.set(sessionId, '')
+        }
         win.webContents.send('terminal:data', {
           sessionId,
           data,

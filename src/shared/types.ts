@@ -194,6 +194,12 @@ export interface TerminalPermissionPayload {
   permissions: PermissionSettings
 }
 
+export interface TerminalModelPayload {
+  sessionId: string
+  model: string
+  effort: string
+}
+
 export interface CodexPanelApi {
   sessions: {
     create: (opts: SessionCreateOptions) => Promise<SessionMeta>
@@ -255,4 +261,5 @@ export interface CodexPanelApi {
   onPermissionChanged: (
     cb: (payload: TerminalPermissionPayload) => void,
   ) => () => void
+  onModelChanged: (cb: (payload: TerminalModelPayload) => void) => () => void
 }
