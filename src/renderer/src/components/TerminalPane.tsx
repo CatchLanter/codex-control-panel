@@ -117,6 +117,23 @@ export function TerminalPane({
       window.api.sessions.write(meta.id, data)
     })
 
+    term.attachCustomKeyEventHandler((event) => {
+      if (
+        event.type === 'keydown' &&
+        event.ctrlKey &&
+        !event.shiftKey &&
+        !event.altKey &&
+        (event.key === 'v' || event.key === 'V')
+      ) {
+        event.preventDefault()
+        void navigator.clipboard.readText().then((text) => {
+          if (text) term.paste(text)
+        })
+        return false
+      }
+      return true
+    })
+
     const observer = new ResizeObserver(() => {
       requestAnimationFrame(doFit)
     })
@@ -214,20 +231,6 @@ export function TerminalPane({
         event.dataTransfer.dropEffect = 'copy'
       }}
       onDrop={handleDrop}
-      onKeyDown={(event) => {
-        if (
-          event.ctrlKey &&
-          !event.shiftKey &&
-          !event.altKey &&
-          (event.key === 'v' || event.key === 'V')
-        ) {
-          event.preventDefault()
-          void navigator.clipboard.readText().then((text) => {
-            termRef.current?.paste(text)
-            termRef.current?.focus()
-          })
-        }
-      }}
       onContextMenu={(event) => {
         event.preventDefault()
         setMenu({ x: event.clientX, y: event.clientY })
