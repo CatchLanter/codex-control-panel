@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 import * as readline from 'readline'
+import { DatabaseSync } from 'node:sqlite'
 import { CodexConversation } from '../shared/types'
 
 interface RolloutMeta {
@@ -125,6 +126,19 @@ export class CodexSessionsStore {
       fs.renameSync(tmpIndex, this.indexFile)
     } catch {
       // index write is best-effort; local override already persisted
+    }
+
+    try {
+      const database = new DatabaseSync(
+        path.join(os.homedir(), '.codex', 'state_5.sqlite'),
+      )
+      database
+        .prepare('update threads set title = ? where id = ?')
+        .run(trimmed, id)
+      database.close()
+    } catch {
+      // state database may be locked or unavailable; the panel still keeps
+      // its own override so the UI stays consistent.
     }
 
     return true
