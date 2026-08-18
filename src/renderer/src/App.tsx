@@ -98,7 +98,7 @@ export default function App() {
         (item) => item.id === sessionsStore.activeId,
       )
       if (session?.codexSession && session.status === 'running') {
-        sessionsStore.restartSession(session.id)
+        sessionsStore.restartSession(session.id, patch)
       }
     },
     [codexStore, sessionsStore],

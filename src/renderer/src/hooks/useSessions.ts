@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { applyCodexMode } from '../../../shared/codex-modes'
 import {
   AppSettings,
+  CodexConfigPatch,
   PermissionSettings,
   SessionMeta,
   ShellKind,
@@ -94,7 +95,11 @@ export function useSessions(settings: AppSettings | null) {
   }, [])
 
   const restartWithPermissions = useCallback(
-    (id: string, permissions: PermissionSettings) => {
+    (
+      id: string,
+      permissions: PermissionSettings,
+      config?: CodexConfigPatch,
+    ) => {
       const current = sessionsRef.current.find((session) => session.id === id)
       if (!current?.codexSession || current.status !== 'running') return
       // Exit the running Codex TUI, then relaunch it while resuming the
@@ -111,6 +116,7 @@ export function useSessions(settings: AppSettings | null) {
             cwd: current.cwd,
             after: current.createdAt,
             permissions,
+            config,
           })
           .then(({ command }) => {
             window.api.sessions.write(id, `${command}\r`)
@@ -138,9 +144,9 @@ export function useSessions(settings: AppSettings | null) {
   )
 
   const restartSession = useCallback(
-    (id: string) => {
+    (id: string, config?: CodexConfigPatch) => {
       const current = sessionsRef.current.find((session) => session.id === id)
-      if (current) restartWithPermissions(id, current.permissions)
+      if (current) restartWithPermissions(id, current.permissions, config)
     },
     [restartWithPermissions],
   )

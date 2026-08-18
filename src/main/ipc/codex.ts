@@ -31,7 +31,9 @@ function samePath(left?: string | null, right?: string | null): boolean {
 async function resumeCommand(
   ctx: IpcContext,
   id: string,
+  patch?: CodexConfigPatch,
 ): Promise<string> {
+  const parts: string[] = []
   const provider = await ctx.codexSessions().providerFor(id)
   const config = currentModelProvider()
   const known = new Set<string>(
@@ -39,11 +41,17 @@ async function resumeCommand(
       (value): value is string => Boolean(value),
     ),
   )
-  if (provider && !known.has(provider)) {
-    const target = config.defaultProvider ?? 'openai'
-    return `codex -c model_provider=${target} resume ${id}`
+  if (patch?.provider) {
+    parts.push(`-c model_provider=${patch.provider}`)
+  } else if (provider && !known.has(provider)) {
+    parts.push(`-c model_provider=${config.defaultProvider ?? 'openai'}`)
   }
-  return `codex resume ${id}`
+  if (patch?.model) parts.push(`-c model=${patch.model}`)
+  if (patch?.reasoningEffort) {
+    parts.push(`-c model_reasoning_effort=${patch.reasoningEffort}`)
+  }
+  const suffix = parts.length ? ` ${parts.join(' ')} resume ${id}` : ` resume ${id}`
+  return `codex${suffix}`
 }
 
 export function registerCodexIpc(ctx: IpcContext): void {
@@ -123,7 +131,7 @@ export function registerCodexIpc(ctx: IpcContext): void {
       if (await hasActiveWriterLock(targetId)) {
         return { command: applyCodexMode('codex', opts.permissions) }
       }
-      const base = await resumeCommand(ctx, targetId)
+      const base = await resumeCommand(ctx, targetId, opts.config)
       return { command: applyCodexMode(base, opts.permissions) }
     },
   )

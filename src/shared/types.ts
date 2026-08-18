@@ -173,6 +173,7 @@ export interface RestartConversationOptions {
   cwd?: string | null
   after?: number
   permissions: PermissionSettings
+  config?: CodexConfigPatch
 }
 
 export interface RestartConversationResult {
