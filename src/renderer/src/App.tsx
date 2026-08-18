@@ -91,19 +91,6 @@ export default function App() {
     )
   }, [settings, sessionsStore])
 
-  const applyModelConfig = useCallback(
-    async (patch: CodexConfigPatch) => {
-      await codexStore.setModelConfig(patch)
-      const session = sessionsStore.sessions.find(
-        (item) => item.id === sessionsStore.activeId,
-      )
-      if (session?.codexSession && session.status === 'running') {
-        sessionsStore.restartSession(session.id)
-      }
-    },
-    [codexStore, sessionsStore],
-  )
-
   const openModelPicker = useCallback(() => {
     const session = sessionsStore.sessions.find(
       (item) => item.id === sessionsStore.activeId,
@@ -114,6 +101,14 @@ export default function App() {
       window.api.sessions.write(session.id, '\r')
     }, 3200)
   }, [sessionsStore])
+
+  const applyModelConfig = useCallback(
+    async (patch: CodexConfigPatch) => {
+      await codexStore.setModelConfig(patch)
+      openModelPicker()
+    },
+    [codexStore, openModelPicker],
+  )
 
   const paletteActions: PaletteAction[] = useMemo(() => {
     if (!settings) return []
