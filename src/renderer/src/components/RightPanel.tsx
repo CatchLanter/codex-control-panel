@@ -32,7 +32,6 @@ export function RightPanel({
   codexConfig,
   onRefreshCodex,
   onApplyModelConfig,
-  onOpenModelPicker,
   onRunInNew,
   onRunInActive,
   onOpenPath,
@@ -47,7 +46,6 @@ export function RightPanel({
   codexConfig: CodexConfig | null
   onRefreshCodex: () => void
   onApplyModelConfig: (patch: CodexConfigPatch) => void
-  onOpenModelPicker: () => void
   onRunInNew: (command: string) => void
   onRunInActive: (command: string) => void
   onOpenPath: (path: string) => void
@@ -285,21 +283,9 @@ export function RightPanel({
               </select>
             </Field>
             <div className="settings-hint">
-              下拉选择会写入配置并自动驱动官方 /model 选择器完成切换
-              （会话内、不退出）；偶发未生效时可用下方按钮手动打开选择器。
+              选择后自动应用到当前会话（会话会快速重启并继续原对话，
+              无需任何额外操作）。
             </div>
-            <button
-              type="button"
-              className="btn btn-block"
-              disabled={
-                !activeSession ||
-                !activeSession.codexSession ||
-                activeSession.status !== 'running'
-              }
-              onClick={onOpenModelPicker}
-            >
-              打开 /model 选择器（当前会话）
-            </button>
           </>
         ) : (
           <div className="panel-empty">未读取到 Codex 配置</div>

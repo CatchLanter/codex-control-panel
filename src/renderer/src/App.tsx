@@ -91,109 +91,17 @@ export default function App() {
     )
   }, [settings, sessionsStore])
 
-  const openModelPicker = useCallback(() => {
-    const session = sessionsStore.sessions.find(
-      (item) => item.id === sessionsStore.activeId,
-    )
-    if (!session?.codexSession || session.status !== 'running') return
-    window.api.sessions.write(session.id, '/model\r')
-    window.setTimeout(() => {
-      window.api.sessions.write(session.id, '\r')
-    }, 3200)
-  }, [sessionsStore])
-
   const applyModelConfig = useCallback(
     async (patch: CodexConfigPatch) => {
+      await codexStore.setModelConfig(patch)
       const session = sessionsStore.sessions.find(
         (item) => item.id === sessionsStore.activeId,
       )
-      const sessionCurrent = session ? sessionModels[session.id] : undefined
-      const models = codexStore.config?.models ?? []
-      const currentModel = sessionCurrent?.model ?? codexStore.config?.model
-      const currentEffort =
-        sessionCurrent?.effort ?? codexStore.config?.reasoningEffort
-      const targetModel = patch.model ?? currentModel
-      const targetEffort = patch.reasoningEffort ?? currentEffort
-      const effortList =
-        codexStore.config?.modelEfforts[targetModel ?? ''] ??
-        ['low', 'medium', 'high', 'max']
-      const modelDelta =
-        models.indexOf(targetModel ?? '') - models.indexOf(currentModel ?? '')
-      const effortDelta =
-        effortList.indexOf(targetEffort ?? '') -
-        effortList.indexOf(currentEffort ?? '')
-
-      await codexStore.setModelConfig(patch)
       if (session?.codexSession && session.status === 'running') {
-        runAutomatedModelSwitch(
-          session.id,
-          Number.isFinite(modelDelta) ? modelDelta : 0,
-          Number.isFinite(effortDelta) ? effortDelta : 0,
-        )
+        sessionsStore.restartSession(session.id)
       }
     },
-    [codexStore, sessionsStore, sessionModels],
-  )
-
-  const runAutomatedModelSwitch = useCallback(
-    (sessionId: string, modelDelta: number, effortDelta: number) => {
-      const write = (text: string) =>
-        window.api.sessions.write(sessionId, text)
-      let buffer = ''
-      let phase = 0
-      let finished = false
-      const timers: number[] = []
-      const finish = () => {
-        if (finished) return
-        finished = true
-        offData()
-        for (const timer of timers) window.clearTimeout(timer)
-      }
-      const pressArrows = (delta: number) => {
-        if (delta === 0) return
-        const key = delta < 0 ? '\x1b[A' : '\x1b[B'
-        let pressed = 0
-        const total = Math.abs(delta)
-        const tick = () => {
-          if (pressed >= total || finished) return
-          write(key)
-          pressed += 1
-          timers.push(window.setTimeout(tick, 300))
-        }
-        tick()
-      }
-      const offData = window.api.onData(({ sessionId: sid, data }) => {
-        if (sid !== sessionId || finished) return
-        buffer = `${buffer}${data}`.slice(-2600)
-        if (phase === 0 && /select model and effort/i.test(buffer)) {
-          phase = 1
-          pressArrows(modelDelta)
-          timers.push(
-            window.setTimeout(
-              () => write('\r'),
-              Math.abs(modelDelta) * 300 + 800,
-            ),
-          )
-        } else if (
-          phase === 1 &&
-          /reasoniglevel|reasoning level/i.test(buffer)
-        ) {
-          phase = 2
-          pressArrows(effortDelta)
-          timers.push(
-            window.setTimeout(
-              () => write('\r'),
-              Math.abs(effortDelta) * 300 + 800,
-            ),
-          )
-          timers.push(window.setTimeout(finish, 2500))
-        }
-      })
-      write('/model\r')
-      timers.push(window.setTimeout(() => write('\r'), 3200))
-      timers.push(window.setTimeout(finish, 30000))
-    },
-    [],
+    [codexStore, sessionsStore],
   )
 
   const paletteActions: PaletteAction[] = useMemo(() => {
@@ -389,7 +297,6 @@ export default function App() {
             codexConfig={codexStore.config}
             onRefreshCodex={() => void codexStore.refresh()}
             onApplyModelConfig={(patch) => void applyModelConfig(patch)}
-            onOpenModelPicker={openModelPicker}
             onRunInNew={(command) => void runInNew(command)}
             onRunInActive={sessionsStore.runInActive}
             onOpenPath={(path) => void window.api.app.openPath(path)}
