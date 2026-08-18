@@ -12,7 +12,8 @@ Codex 风格的本地桌面控制面板：在一个窗口里管理多个真实�
 - 多终端：真实 cmd / PowerShell / PowerShell 7 / WSL 进程，标签页与网格两种排布；
   新建终端可自动启动 Codex，也可手动选择空终端
 - Codex 对话历史：读取 `~/.codex/sessions`，显示对话标题，点击直接
-  `codex resume <id>` 续聊，支持重命名与永久删除
+  `codex resume <id>` 续聊，支持重命名与永久删除；重命名会同步写入 Codex
+  的 state 数据库，`codex resume` 选择器中也能看到新名字
 - 对话隐藏：右键可将对话隐藏，列表与搜索中不再显示；侧栏底部隐藏入口可恢复，
   不删除任何会话文件
 - 每终端独立权限模式：默认 / 计划（只读）/ 自动 / 完全自动 / 自定义；
@@ -20,8 +21,10 @@ Codex 风格的本地桌面控制面板：在一个窗口里管理多个真实�
   在 Codex 内手动 `/permissions` 切换时，面板状态会实时同步
 - API 与模型：在设置或右栏切换 API 服务、模型（如
   deepseek-v4-flash / deepseek-v4-pro）和推理强度（low/medium/high/max），
-  支持添加自定义 API，写入 `~/.codex/config.toml`（自动备份 .bak）
-- 终端体验：拖拽文件到终端自动填入路径、字号可调、自动滚到底部
+  支持添加自定义 API，写入 `~/.codex/config.toml`（自动备份 .bak）；切换后
+  当前 Codex 会话会自动重启并加载新配置
+- 终端体验：拖拽文件到终端自动填入路径、字号可调、自动滚到底部；
+  支持 Ctrl+V 粘贴，选中文字后 Ctrl+C 复制（未选中时仍为中断）
 - 终端输出自动落盘，可在设置中一键清空
 - 无边框窗口：细标题栏 + 右上角原生风格最小化/最大化/关闭按钮
 - 设置面板按「权限与安全 / 终端 / 外观 / Codex 与模型 / 快捷键 / 数据」分类
@@ -122,6 +125,8 @@ npm run pack       # 用 electron-builder 生成 Windows 安装包（release/）
 | 下一个 / 上一个标签 | Ctrl+Tab / Ctrl+Shift+Tab |
 | 开关历史侧栏 | Ctrl+B |
 | 打开设置 | Ctrl+, |
+| 终端粘贴 | Ctrl+V |
+| 复制终端选中文字 | Ctrl+C（未选中时为中断） |
 
 ## 数据位置
 
