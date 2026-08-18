@@ -94,8 +94,14 @@ export default function App() {
   const applyModelConfig = useCallback(
     async (patch: CodexConfigPatch) => {
       await codexStore.setModelConfig(patch)
+      const session = sessionsStore.sessions.find(
+        (item) => item.id === sessionsStore.activeId,
+      )
+      if (session?.codexSession && session.status === 'running') {
+        sessionsStore.restartSession(session.id)
+      }
     },
-    [codexStore],
+    [codexStore, sessionsStore],
   )
 
   const openModelPicker = useCallback(() => {
