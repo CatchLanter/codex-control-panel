@@ -285,8 +285,8 @@ export function RightPanel({
               </select>
             </Field>
             <div className="settings-hint">
-              下拉选择会写入配置并自动打开官方 /model 选择器（会话内切换，
-              不退出）；若未自动弹出，可用下方按钮手动唤起。
+              下拉选择会写入配置并自动驱动官方 /model 选择器完成切换
+              （会话内、不退出）；偶发未生效时可用下方按钮手动打开选择器。
             </div>
             <button
               type="button"
