@@ -123,6 +123,20 @@ export function TerminalPane({
         event.ctrlKey &&
         !event.shiftKey &&
         !event.altKey &&
+        (event.key === 'c' || event.key === 'C')
+      ) {
+        if (term.hasSelection()) {
+          event.preventDefault()
+          void navigator.clipboard.writeText(term.getSelection())
+          return false
+        }
+        return true
+      }
+      if (
+        event.type === 'keydown' &&
+        event.ctrlKey &&
+        !event.shiftKey &&
+        !event.altKey &&
         (event.key === 'v' || event.key === 'V')
       ) {
         event.preventDefault()
