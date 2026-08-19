@@ -39,9 +39,24 @@ export function TerminalPane({
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
   const visibleRef = useRef(visible)
+  const pinRef = useRef(true)
+  const pinTimerRef = useRef<number | null>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
 
   visibleRef.current = visible
+
+  const schedulePinScroll = useCallback(() => {
+    if (pinTimerRef.current != null) {
+      window.clearTimeout(pinTimerRef.current)
+    }
+    pinTimerRef.current = window.setTimeout(() => {
+      try {
+        termRef.current?.scrollToBottom()
+      } catch {
+        // terminal may be detaching
+      }
+    }, 180)
+  }, [])
 
   const doFit = useCallback(() => {
     const host = hostRef.current
@@ -84,7 +99,10 @@ export function TerminalPane({
       if (sessionId !== meta.id) return
       const clean = sanitizePtyData(data)
       if (!clean) return
-      if (ready) term.write(clean)
+      if (ready) {
+        term.write(clean)
+        if (pinRef.current) schedulePinScroll()
+      }
       else pending.push(clean)
     })
 
@@ -111,9 +129,11 @@ export function TerminalPane({
       requestAnimationFrame(() => {
         if (!disposed) term.scrollToBottom()
       })
+      schedulePinScroll()
     })
 
     const dataDisposable = term.onData((data) => {
+      pinRef.current = false
       window.api.sessions.write(meta.id, data)
     })
 
@@ -140,6 +160,7 @@ export function TerminalPane({
         (event.key === 'v' || event.key === 'V')
       ) {
         event.preventDefault()
+        pinRef.current = false
         void navigator.clipboard.readText().then((text) => {
           if (text) term.paste(text)
         })
@@ -154,10 +175,18 @@ export function TerminalPane({
     observer.observe(host)
 
     if (visible) requestAnimationFrame(doFit)
+    pinRef.current = true
+    const unpinTimer = window.setTimeout(() => {
+      pinRef.current = false
+    }, 30000)
     term.focus()
 
     return () => {
       disposed = true
+      window.clearTimeout(unpinTimer)
+      if (pinTimerRef.current != null) {
+        window.clearTimeout(pinTimerRef.current)
+      }
       offData()
       dataDisposable.dispose()
       observer.disconnect()
