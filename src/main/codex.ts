@@ -36,6 +36,32 @@ function knownPath(): string | null {
   return fs.existsSync(candidate) ? candidate : null
 }
 
+async function locateCodex(): Promise<string | null> {
+  const known = knownPath()
+  if (known) return known
+  try {
+    const found = (await run('where.exe', ['codex'])).split(/\r?\n/)[0]
+    if (found && found.trim()) return found.trim()
+  } catch {
+    // not on PATH
+  }
+  return null
+}
+
+async function readCodexVersion(executable: string): Promise<string | null> {
+  try {
+    if (/\.exe$/i.test(executable)) {
+      return await run(executable, ['--version'])
+    }
+    return await run(
+      process.env.ComSpec || 'cmd.exe',
+      ['/d', '/s', '/c', `"${executable}" --version`],
+    )
+  } catch {
+    return null
+  }
+}
+
 function configPath(): string {
   return path.join(os.homedir(), '.codex', 'config.toml')
 }
@@ -121,25 +147,8 @@ function modelsCatalogPath(configText: string): string | null {
 }
 
 export async function detectCodex(): Promise<CodexInfo> {
-  let executable = knownPath()
-  let version: string | null = null
-
-  if (!executable) {
-    try {
-      const found = (await run('where.exe', ['codex'])).split(/\r?\n/)[0]
-      if (found && found.toLowerCase().endsWith('.exe')) executable = found
-    } catch {
-      // not on PATH
-    }
-  }
-
-  if (executable) {
-    try {
-      version = await run(executable, ['--version'])
-    } catch {
-      // keep null
-    }
-  }
+  const executable = await locateCodex()
+  const version = executable ? await readCodexVersion(executable) : null
 
   const target = configPath()
   let model: string | null = null
@@ -187,7 +196,13 @@ export async function deleteCodexConversation(
     return { ok: false, output: '未检测到 Codex CLI' }
   }
   try {
-    const output = await run(info.path, ['delete', '--force', id], 60000)
+    const output = /\.exe$/i.test(info.path)
+      ? await run(info.path, ['delete', '--force', id], 60000)
+      : await run(
+          process.env.ComSpec || 'cmd.exe',
+          ['/d', '/s', '/c', `"${info.path}" delete --force ${id}`],
+          60000,
+        )
     return { ok: true, output: output || '已删除' }
   } catch (error) {
     return {
