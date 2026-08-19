@@ -40,22 +40,17 @@ export function TerminalPane({
   const fitRef = useRef<FitAddon | null>(null)
   const visibleRef = useRef(visible)
   const pinRef = useRef(true)
-  const pinTimerRef = useRef<number | null>(null)
+  const pinIntervalRef = useRef<number | null>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
 
   visibleRef.current = visible
 
-  const schedulePinScroll = useCallback(() => {
-    if (pinTimerRef.current != null) {
-      window.clearTimeout(pinTimerRef.current)
+  const stopPin = useCallback(() => {
+    pinRef.current = false
+    if (pinIntervalRef.current != null) {
+      window.clearInterval(pinIntervalRef.current)
+      pinIntervalRef.current = null
     }
-    pinTimerRef.current = window.setTimeout(() => {
-      try {
-        termRef.current?.scrollToBottom()
-      } catch {
-        // terminal may be detaching
-      }
-    }, 180)
   }, [])
 
   const doFit = useCallback(() => {
@@ -101,7 +96,13 @@ export function TerminalPane({
       if (!clean) return
       if (ready) {
         term.write(clean)
-        if (pinRef.current) schedulePinScroll()
+        if (pinRef.current) {
+          try {
+            term.scrollToBottom()
+          } catch {
+            // terminal may be detaching
+          }
+        }
       }
       else pending.push(clean)
     })
@@ -129,11 +130,10 @@ export function TerminalPane({
       requestAnimationFrame(() => {
         if (!disposed) term.scrollToBottom()
       })
-      schedulePinScroll()
     })
 
     const dataDisposable = term.onData((data) => {
-      pinRef.current = false
+      stopPin()
       window.api.sessions.write(meta.id, data)
     })
 
@@ -160,7 +160,7 @@ export function TerminalPane({
         (event.key === 'v' || event.key === 'V')
       ) {
         event.preventDefault()
-        pinRef.current = false
+        stopPin()
         void navigator.clipboard.readText().then((text) => {
           if (text) term.paste(text)
         })
@@ -176,17 +176,23 @@ export function TerminalPane({
 
     if (visible) requestAnimationFrame(doFit)
     pinRef.current = true
+    pinIntervalRef.current = window.setInterval(() => {
+      if (!pinRef.current) return
+      try {
+        term.scrollToBottom()
+      } catch {
+        // terminal may be detaching
+      }
+    }, 450)
     const unpinTimer = window.setTimeout(() => {
-      pinRef.current = false
+      stopPin()
     }, 30000)
     term.focus()
 
     return () => {
       disposed = true
       window.clearTimeout(unpinTimer)
-      if (pinTimerRef.current != null) {
-        window.clearTimeout(pinTimerRef.current)
-      }
+      stopPin()
       offData()
       dataDisposable.dispose()
       observer.disconnect()
