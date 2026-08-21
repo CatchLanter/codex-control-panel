@@ -53,6 +53,19 @@ export function TerminalPane({
     }
   }, [])
 
+  const startPin = useCallback(() => {
+    pinRef.current = true
+    if (pinIntervalRef.current != null) return
+    pinIntervalRef.current = window.setInterval(() => {
+      if (!pinRef.current) return
+      try {
+        termRef.current?.scrollToBottom()
+      } catch {
+        // terminal may be detaching
+      }
+    }, 450)
+  }, [])
+
   const doFit = useCallback(() => {
     const host = hostRef.current
     const term = termRef.current
@@ -174,25 +187,19 @@ export function TerminalPane({
     })
     observer.observe(host)
 
+    const onWheel = (event: WheelEvent) => {
+      if (event.deltaY < 0) stopPin()
+    }
+    host.addEventListener('wheel', onWheel)
+
     if (visible) requestAnimationFrame(doFit)
-    pinRef.current = true
-    pinIntervalRef.current = window.setInterval(() => {
-      if (!pinRef.current) return
-      try {
-        term.scrollToBottom()
-      } catch {
-        // terminal may be detaching
-      }
-    }, 450)
-    const unpinTimer = window.setTimeout(() => {
-      stopPin()
-    }, 30000)
+    startPin()
     term.focus()
 
     return () => {
       disposed = true
-      window.clearTimeout(unpinTimer)
       stopPin()
+      host.removeEventListener('wheel', onWheel)
       offData()
       dataDisposable.dispose()
       observer.disconnect()
@@ -202,7 +209,7 @@ export function TerminalPane({
     }
     // Terminal instances are tied to a session, not to style changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta.id, doFit])
+  }, [meta.id, doFit, startPin, stopPin])
 
   useEffect(() => {
     const term = termRef.current
@@ -214,17 +221,12 @@ export function TerminalPane({
 
   useEffect(() => {
     if (visible) {
+      startPin()
       requestAnimationFrame(doFit)
-      const timer = setTimeout(() => {
-        try {
-          termRef.current?.scrollToBottom()
-        } catch {
-          // terminal may be detaching
-        }
-      }, 80)
-      return () => clearTimeout(timer)
+    } else {
+      stopPin()
     }
-  }, [visible, doFit])
+  }, [visible, doFit, startPin, stopPin])
 
   useEffect(() => {
     if (!menu) return
