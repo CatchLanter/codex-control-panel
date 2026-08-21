@@ -195,9 +195,25 @@ export function TerminalPane({
     observer.observe(host)
 
     const onWheel = (event: WheelEvent) => {
-      if (event.deltaY < 0) {
-        window.api.app.log('debug', `wheel up session=${meta.id} unpin`)
+      if (event.deltaY < -20) {
+        window.api.app.log(
+          'debug',
+          `wheel up session=${meta.id} delta=${event.deltaY} unpin`,
+        )
         stopPin()
+      } else if (event.deltaY > 20) {
+        const term = termRef.current
+        if (
+          term &&
+          term.buffer.active.viewportY + term.rows >=
+            term.buffer.active.baseY
+        ) {
+          window.api.app.log(
+            'debug',
+            `wheel down session=${meta.id} re-pin`,
+          )
+          startPin()
+        }
       }
     }
     host.addEventListener('wheel', onWheel)
