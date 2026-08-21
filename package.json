@@ -14,6 +14,8 @@
     "build": "tsc --noEmit -p tsconfig.web.json && tsc -p tsconfig.electron.json && vite build",
     "smoke": "tsc -p tsconfig.electron.json && node scripts/smoke-pty.js",
     "e2e": "tsc -p tsconfig.electron.json && node scripts/e2e-daemon.js",
+    "test:approval": "tsc -p tsconfig.electron.json && node scripts/test-approval-watch.js",
+    "e2e:light": "node scripts/e2e-status-light.js",
     "start": "npm run build && electron .",
     "pack": "npm run build && electron-builder --win"
   },
