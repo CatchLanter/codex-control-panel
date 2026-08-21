@@ -45,8 +45,8 @@ export function TerminalPane({
 
   visibleRef.current = visible
 
-  const stopPin = useCallback(() => {
-    window.api.app.log('debug', `stop pin session=${meta.id}`)
+  const stopPin = useCallback((source: string) => {
+    window.api.app.log('debug', `stop pin session=${meta.id} source=${source}`)
     pinRef.current = false
     if (pinIntervalRef.current != null) {
       window.clearInterval(pinIntervalRef.current)
@@ -153,7 +153,11 @@ export function TerminalPane({
     })
 
     const dataDisposable = term.onData((data) => {
-      stopPin()
+      window.api.app.log(
+        'debug',
+        `input session=${meta.id} data=${JSON.stringify(data.slice(0, 40))}`,
+      )
+      stopPin('input')
       window.api.sessions.write(meta.id, data)
     })
 
@@ -180,7 +184,7 @@ export function TerminalPane({
         (event.key === 'v' || event.key === 'V')
       ) {
         event.preventDefault()
-        stopPin()
+        stopPin('paste')
         void navigator.clipboard.readText().then((text) => {
           if (text) term.paste(text)
         })
@@ -200,7 +204,7 @@ export function TerminalPane({
           'debug',
           `wheel up session=${meta.id} delta=${event.deltaY} unpin`,
         )
-        stopPin()
+        stopPin('wheel-up')
       } else if (event.deltaY > 20) {
         const term = termRef.current
         if (
@@ -224,7 +228,7 @@ export function TerminalPane({
 
     return () => {
       disposed = true
-      stopPin()
+      stopPin('hidden')
       host.removeEventListener('wheel', onWheel)
       offData()
       dataDisposable.dispose()
@@ -252,7 +256,7 @@ export function TerminalPane({
       requestAnimationFrame(doFit)
     } else {
       window.api.app.log('debug', `hidden session=${meta.id}`)
-      stopPin()
+      stopPin('cleanup')
     }
   }, [visible, doFit, startPin, stopPin])
 
