@@ -6,6 +6,7 @@ import {
   SessionCreateOptions,
 } from '../../shared/types'
 import type { IpcContext } from './types'
+import { approvalClear } from '../approval-watch'
 
 export function registerSessionIpc(ctx: IpcContext): void {
   ipcMain.handle('session:create', (_event, opts: SessionCreateOptions) =>
@@ -18,6 +19,13 @@ export function registerSessionIpc(ctx: IpcContext): void {
   )
   ipcMain.on('session:write', (_event, id: string, data: unknown) => {
     ctx.pty().write(id, String(data))
+    if (approvalClear(id)) {
+      const win = ctx.mainWindow()
+      win?.webContents.send('terminal:approval', {
+        sessionId: id,
+        waiting: false,
+      })
+    }
   })
   ipcMain.on(
     'session:resize',

@@ -10,6 +10,7 @@ import { createMainWindow, getMainWindow } from './window'
 import { HistoryEntry, SessionMeta } from '../shared/types'
 import { permissionFromCodexLabel } from '../shared/codex-modes'
 import { initLogging, writeLog } from './log'
+import { approvalData } from './approval-watch'
 
 let ptyClient: PtyClient | null = null
 let historyStore: HistoryStore | null = null
@@ -17,9 +18,6 @@ let settingsStore: SettingsStore | null = null
 let codexSessionsStore: CodexSessionsStore | null = null
 let quitting = false
 const permissionScanBuffers = new Map<string, string>()
-const approvalWaiters = new Map<string, boolean>()
-const APPROVAL_PATTERN =
-  /(would you like to|waiting for approval|approve this|confirm this)/i
 
 const gotLock = app.requestSingleInstanceLock()
 
@@ -55,9 +53,8 @@ if (!gotLock) {
         const cleaned = combined
           .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, ' ')
           .replace(/\x1b\][^\x07]*\x07/g, ' ')
-        const waiting = APPROVAL_PATTERN.test(cleaned)
-        if (approvalWaiters.get(sessionId) !== waiting) {
-          approvalWaiters.set(sessionId, waiting)
+        const waiting = approvalData(sessionId, data)
+        if (waiting !== null) {
           win.webContents.send('terminal:approval', {
             sessionId,
             waiting,
