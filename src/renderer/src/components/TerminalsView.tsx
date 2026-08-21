@@ -11,7 +11,6 @@ import {
   IconColumns,
   IconGrid,
   IconPlus,
-  IconSparkles,
   IconTerminal,
 } from './Icons'
 import { IconButton } from './ui'
@@ -73,11 +72,6 @@ export function TerminalsView({
   }
   const activeSession =
     sessions.find((session) => session.id === activeId) ?? null
-  const activeConversation = activeSession?.conversationId
-    ? conversations.find(
-        (conversation) => conversation.id === activeSession.conversationId,
-      )
-    : undefined
   const sessionTitle = (session: SessionMeta) => {
     if (!session.conversationId) return session.title
     return (
@@ -96,14 +90,6 @@ export function TerminalsView({
 
   return (
     <div className="terminals">
-      {activeSession?.codexSession && (
-        <div className="conversation-bar">
-          <IconSparkles size={13} />
-          <span className="conversation-bar-name">
-            {activeConversation?.title ?? '新对话'}
-          </span>
-        </div>
-      )}
       <div className="tabs-bar">
         <div className="tabs">
           {sessions.map((session) => (

@@ -433,30 +433,6 @@
   min-height: 0;
 }
 
-.conversation-bar {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  height: 28px;
-  padding: 0 12px;
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
-  color: var(--text-secondary);
-}
-
-.conversation-bar svg {
-  color: var(--blue);
-}
-
-.conversation-bar-name {
-  min-width: 0;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .tabs-bar {
   flex: none;
   display: flex;
