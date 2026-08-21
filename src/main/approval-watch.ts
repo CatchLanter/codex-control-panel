@@ -17,9 +17,9 @@ export function approvalData(
   const combined = ((buffers.get(sessionId) ?? '') + data).slice(-4000)
   buffers.set(sessionId, combined)
   const waiting = APPROVAL_PATTERN.test(clean(combined))
-  if (waiters.get(sessionId) !== waiting) {
-    waiters.set(sessionId, waiting)
-    return waiting
+  if (waiting && waiters.get(sessionId) !== true) {
+    waiters.set(sessionId, true)
+    return true
   }
   return null
 }
