@@ -68,8 +68,11 @@ export function RightPanel({
     return activeSession.endedAt - activeSession.createdAt
   }, [activeSession, now])
 
+  const displayModel = sessionModel?.model ?? codexConfig?.model ?? ''
+  const displayEffort =
+    sessionModel?.effort ?? codexConfig?.reasoningEffort ?? 'high'
   const effortOptions =
-    codexConfig?.modelEfforts[codexConfig.model ?? ''] ?? EFFORT_OPTIONS
+    codexConfig?.modelEfforts[displayModel] ?? EFFORT_OPTIONS
 
   const submitExec = () => {
     const prompt = execPrompt.trim()
@@ -247,7 +250,7 @@ export function RightPanel({
             <Field label="模型">
               <select
                 className="select"
-                value={codexConfig.model ?? ''}
+                value={displayModel}
                 onChange={(event) => {
                   onApplyModelConfig({ model: event.target.value })
                 }}
@@ -262,7 +265,7 @@ export function RightPanel({
             <Field label="推理强度">
               <select
                 className="select"
-                value={codexConfig.reasoningEffort ?? 'high'}
+                value={displayEffort}
                 onChange={(event) => {
                   onApplyModelConfig({
                     reasoningEffort: event.target.value,
@@ -274,10 +277,10 @@ export function RightPanel({
                     {effort}
                   </option>
                 ))}
-                {codexConfig.reasoningEffort &&
-                  !effortOptions.includes(codexConfig.reasoningEffort) && (
-                    <option value={codexConfig.reasoningEffort}>
-                      {codexConfig.reasoningEffort}
+                {displayEffort &&
+                  !effortOptions.includes(displayEffort) && (
+                    <option value={displayEffort}>
+                      {displayEffort}
                     </option>
                   )}
               </select>

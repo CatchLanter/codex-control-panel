@@ -37,10 +37,16 @@ export default function App() {
 
   useEffect(() => {
     return window.api.onModelChanged(({ sessionId, model, effort }) => {
-      setSessionModels((prev) => ({
-        ...prev,
-        [sessionId]: { model, effort },
-      }))
+      setSessionModels((prev) => {
+        const current = prev[sessionId]
+        if (current?.model === model && current.effort === effort) {
+          return prev
+        }
+        return {
+          ...prev,
+          [sessionId]: { model, effort },
+        }
+      })
     })
   }, [])
 

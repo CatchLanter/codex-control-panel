@@ -71,6 +71,14 @@ if (!gotLock) {
           })
           permissionScanBuffers.set(sessionId, '')
         }
+        const headerMatch = cleaned.match(/\bmodel:\s+(\S+)\s+(\S+)\b/i)
+        if (headerMatch && !/loading/i.test(headerMatch[1])) {
+          win.webContents.send('terminal:model', {
+            sessionId,
+            model: headerMatch[1],
+            effort: headerMatch[2],
+          })
+        }
         win.webContents.send('terminal:data', {
           sessionId,
           data,
