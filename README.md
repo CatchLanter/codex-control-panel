@@ -115,6 +115,9 @@ npm run pack       # 用 electron-builder 生成 Windows 安装包（release/）
 发布到 GitHub Release：推送 `v*` 标签即可，GitHub Actions 会自动构建 Windows
 安装包并发布 Release；也可在 Actions 页面手动 Run workflow 只构建产物。
 
+升级说明：新版本安装包会固定安装到同一目录，运行时会自动卸载并替换旧版本，
+无需手动卸载；应用设置与终端记录会保留。
+
 ## 快捷键（默认，可在设置中修改）
 
 | 动作 | 快捷键 |
