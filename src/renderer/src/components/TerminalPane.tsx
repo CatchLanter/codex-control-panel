@@ -46,6 +46,7 @@ export function TerminalPane({
   visibleRef.current = visible
 
   const stopPin = useCallback(() => {
+    window.api.app.log('debug', `stop pin session=${meta.id}`)
     pinRef.current = false
     if (pinIntervalRef.current != null) {
       window.clearInterval(pinIntervalRef.current)
@@ -54,6 +55,7 @@ export function TerminalPane({
   }, [])
 
   const startPin = useCallback(() => {
+    window.api.app.log('debug', `start pin session=${meta.id}`)
     pinRef.current = true
     if (pinIntervalRef.current != null) return
     pinIntervalRef.current = window.setInterval(() => {
@@ -73,10 +75,15 @@ export function TerminalPane({
     if (!host || !term || !fit || !visibleRef.current) return
     if (host.offsetWidth === 0 || host.offsetHeight === 0) return
     try {
+      const beforeViewport = `${term.buffer.active.viewportY}/${term.buffer.active.baseY}`
       fit.fit()
       window.api.sessions.resize(meta.id, term.cols, term.rows)
       term.scrollToBottom()
       requestAnimationFrame(() => term.scrollToBottom())
+      window.api.app.log(
+        'debug',
+        `fit session=${meta.id} host=${host.offsetWidth}x${host.offsetHeight} term=${term.cols}x${term.rows} vp=${beforeViewport}->${term.buffer.active.viewportY}/${term.buffer.active.baseY}`,
+      )
     } catch {
       // terminal may be detaching
     }
@@ -188,7 +195,10 @@ export function TerminalPane({
     observer.observe(host)
 
     const onWheel = (event: WheelEvent) => {
-      if (event.deltaY < 0) stopPin()
+      if (event.deltaY < 0) {
+        window.api.app.log('debug', `wheel up session=${meta.id} unpin`)
+        stopPin()
+      }
     }
     host.addEventListener('wheel', onWheel)
 
@@ -221,9 +231,11 @@ export function TerminalPane({
 
   useEffect(() => {
     if (visible) {
+      window.api.app.log('debug', `visible session=${meta.id}`)
       startPin()
       requestAnimationFrame(doFit)
     } else {
+      window.api.app.log('debug', `hidden session=${meta.id}`)
       stopPin()
     }
   }, [visible, doFit, startPin, stopPin])

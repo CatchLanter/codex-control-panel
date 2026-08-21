@@ -9,6 +9,7 @@ import { SettingsStore } from './settings'
 import { createMainWindow, getMainWindow } from './window'
 import { HistoryEntry, SessionMeta } from '../shared/types'
 import { permissionFromCodexLabel } from '../shared/codex-modes'
+import { initLogging, writeLog } from './log'
 
 let ptyClient: PtyClient | null = null
 let historyStore: HistoryStore | null = null
@@ -32,6 +33,7 @@ if (!gotLock) {
 
   app.whenReady().then(async () => {
     const dataDir = path.join(app.getPath('userData'), 'data')
+    initLogging(dataDir)
     settingsStore = new SettingsStore(dataDir)
     historyStore = new HistoryStore(dataDir)
     historyStore.pruneOlderThan(settingsStore.load().historyRetentionDays)
@@ -126,6 +128,7 @@ if (!gotLock) {
 
     registerAllIpc(ctx)
     createMainWindow()
+    writeLog('info', 'app started')
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {

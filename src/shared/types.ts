@@ -249,6 +249,7 @@ export interface CodexPanelApi {
     openPath: (path: string) => Promise<string>
     getPathForFile: (file: unknown) => string
     quit: () => Promise<void>
+    log: (level: string, message: string) => void
   }
   window: {
     minimize: () => void

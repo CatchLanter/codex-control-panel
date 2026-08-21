@@ -1,5 +1,6 @@
 import { app, dialog, ipcMain, shell } from 'electron'
 import type { IpcContext } from './types'
+import { writeLog, LogLevel } from '../log'
 
 export function registerSystemIpc(ctx: IpcContext): void {
   ipcMain.handle('dialog:pick-directory', async () => {
@@ -20,6 +21,12 @@ export function registerSystemIpc(ctx: IpcContext): void {
   ipcMain.handle('app:quit', () => {
     app.quit()
   })
+  ipcMain.on(
+    'log:write',
+    (_event, level: LogLevel, message: unknown) => {
+      writeLog(level, String(message))
+    },
+  )
 
   ipcMain.on('window:minimize', () => ctx.mainWindow()?.minimize())
   ipcMain.on('window:toggle-maximize', () => {

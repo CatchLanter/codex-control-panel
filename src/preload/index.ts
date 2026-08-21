@@ -93,6 +93,9 @@ const api: CodexPanelApi = {
     getPathForFile: (file: unknown): string =>
       webUtils.getPathForFile(file as File),
     quit: (): Promise<void> => ipcRenderer.invoke('app:quit'),
+    log: (level: string, message: string): void => {
+      ipcRenderer.send('log:write', level, message)
+    },
   },
   window: {
     minimize: (): void => {

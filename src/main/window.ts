@@ -1,5 +1,6 @@
 import { BrowserWindow, shell } from 'electron'
 import * as path from 'path'
+import { writeLog } from './log'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -31,8 +32,23 @@ export function createMainWindow(): BrowserWindow {
     if (mainWindow === win) mainWindow = null
   })
   win.once('ready-to-show', () => win.show())
-  win.on('maximize', () => win.webContents.send('window:maximized', true))
-  win.on('unmaximize', () => win.webContents.send('window:maximized', false))
+  win.on('maximize', () => {
+    writeLog('info', 'window maximized')
+    win.webContents.send('window:maximized', true)
+  })
+  win.on('unmaximize', () => {
+    writeLog('info', 'window unmaximized')
+    win.webContents.send('window:maximized', false)
+  })
+  let lastResizeLog = 0
+  win.on('resize', () => {
+    const now = Date.now()
+    if (now - lastResizeLog > 800) {
+      lastResizeLog = now
+      const [width, height] = win.getSize()
+      writeLog('info', `window resized ${width}x${height}`)
+    }
+  })
 
   const devUrl = process.env.VITE_DEV_SERVER_URL
   if (devUrl) {
