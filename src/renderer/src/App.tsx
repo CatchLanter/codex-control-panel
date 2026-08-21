@@ -279,6 +279,7 @@ export default function App() {
         <main className="center">
           <TerminalsView
             sessions={sessionsStore.sessions}
+            conversations={conversationsStore.conversations}
             activeId={activeSession?.id ?? null}
             settings={settings}
             theme={settings.theme}

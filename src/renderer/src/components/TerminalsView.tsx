@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { AppSettings, SessionMeta, ShellKind } from '../../../shared/types'
+import {
+  AppSettings,
+  CodexConversation,
+  SessionMeta,
+  ShellKind,
+} from '../../../shared/types'
 import { PERMISSION_MODE_LABELS } from '../../../shared/codex-modes'
 import {
   IconChevronDown,
@@ -7,6 +12,7 @@ import {
   IconColumns,
   IconGrid,
   IconPlus,
+  IconSparkles,
   IconTerminal,
 } from './Icons'
 import { IconButton } from './ui'
@@ -21,6 +27,7 @@ const SHELL_OPTIONS: { value: ShellKind; label: string }[] = [
 
 export function TerminalsView({
   sessions,
+  conversations,
   activeId,
   settings,
   theme,
@@ -32,6 +39,7 @@ export function TerminalsView({
   onSettingsChange,
 }: {
   sessions: SessionMeta[]
+  conversations: CodexConversation[]
   activeId: string | null
   settings: AppSettings
   theme: 'dark' | 'light'
@@ -62,9 +70,24 @@ export function TerminalsView({
   const gridStyle = {
     gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
   }
+  const activeSession =
+    sessions.find((session) => session.id === activeId) ?? null
+  const activeConversation = activeSession?.conversationId
+    ? conversations.find(
+        (conversation) => conversation.id === activeSession.conversationId,
+      )
+    : undefined
 
   return (
     <div className="terminals">
+      {activeSession?.codexSession && (
+        <div className="conversation-bar">
+          <IconSparkles size={13} />
+          <span className="conversation-bar-name">
+            {activeConversation?.title ?? '新对话'}
+          </span>
+        </div>
+      )}
       <div className="tabs-bar">
         <div className="tabs">
           {sessions.map((session) => (
