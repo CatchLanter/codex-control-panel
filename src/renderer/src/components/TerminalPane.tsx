@@ -153,11 +153,20 @@ export function TerminalPane({
     })
 
     const dataDisposable = term.onData((data) => {
-      window.api.app.log(
-        'debug',
-        `input session=${meta.id} data=${JSON.stringify(data.slice(0, 40))}`,
-      )
-      stopPin('input')
+      const isTerminalResponse =
+        /^(?:\x1b\[[0-9;>?]*[cn]|\x1b\[[IO])+$/.test(data)
+      if (isTerminalResponse) {
+        window.api.app.log(
+          'debug',
+          `terminal response session=${meta.id} data=${JSON.stringify(data)}`,
+        )
+      } else {
+        window.api.app.log(
+          'debug',
+          `input session=${meta.id} data=${JSON.stringify(data.slice(0, 40))}`,
+        )
+        stopPin('input')
+      }
       window.api.sessions.write(meta.id, data)
     })
 
