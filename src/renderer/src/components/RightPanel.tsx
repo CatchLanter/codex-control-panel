@@ -28,6 +28,8 @@ export function RightPanel({
   settings,
   activeSession,
   sessionModel,
+  conversationTitle,
+  waiting,
   codex,
   codexConfig,
   onRefreshCodex,
@@ -42,6 +44,8 @@ export function RightPanel({
   settings: AppSettings
   activeSession: SessionMeta | null
   sessionModel?: { model: string; effort: string }
+  conversationTitle?: string
+  waiting?: boolean
   codex: CodexInfo | null
   codexConfig: CodexConfig | null
   onRefreshCodex: () => void
@@ -112,7 +116,9 @@ export function RightPanel({
           <div className="session-info">
             <div className="info-row">
               <span className="info-label">标题</span>
-              <span className="info-value">{activeSession.title}</span>
+              <span className="info-value">
+                {conversationTitle ?? activeSession.title}
+              </span>
             </div>
             <div className="info-row">
               <span className="info-label">Shell</span>
@@ -123,10 +129,20 @@ export function RightPanel({
             <div className="info-row">
               <span className="info-label">状态</span>
               <span className="info-value">
-                <span className={`status-dot status-${activeSession.status}`} />
-                {activeSession.status === 'running'
-                  ? '运行中'
-                  : '已退出'}
+                <span
+                  className={`status-light ${
+                    activeSession.status !== 'running'
+                      ? 'exited'
+                      : waiting
+                        ? 'waiting'
+                        : 'active'
+                  }`}
+                />
+                {activeSession.status !== 'running'
+                  ? '已退出'
+                  : waiting
+                    ? '等待确认'
+                    : '运行中'}
                 {activeSession.exitCode != null &&
                   ` (${activeSession.exitCode})`}
               </span>

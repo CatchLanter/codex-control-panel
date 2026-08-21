@@ -5,7 +5,6 @@ import {
   SessionMeta,
   ShellKind,
 } from '../../../shared/types'
-import { PERMISSION_MODE_LABELS } from '../../../shared/codex-modes'
 import {
   IconChevronDown,
   IconClose,
@@ -28,6 +27,7 @@ const SHELL_OPTIONS: { value: ShellKind; label: string }[] = [
 export function TerminalsView({
   sessions,
   conversations,
+  waitingById,
   activeId,
   settings,
   theme,
@@ -40,6 +40,7 @@ export function TerminalsView({
 }: {
   sessions: SessionMeta[]
   conversations: CodexConversation[]
+  waitingById: Record<string, boolean>
   activeId: string | null
   settings: AppSettings
   theme: 'dark' | 'light'
@@ -77,6 +78,21 @@ export function TerminalsView({
         (conversation) => conversation.id === activeSession.conversationId,
       )
     : undefined
+  const sessionTitle = (session: SessionMeta) => {
+    if (!session.conversationId) return session.title
+    return (
+      conversations.find((item) => item.id === session.conversationId)
+        ?.title ?? session.title
+    )
+  }
+  const statusClass = (session: SessionMeta) => {
+    if (session.status !== 'running') return 'exited'
+    return waitingById[session.id] ? 'waiting' : 'active'
+  }
+  const statusTitle = (session: SessionMeta) => {
+    if (session.status !== 'running') return '已退出'
+    return waitingById[session.id] ? '等待确认' : '运行中'
+  }
 
   return (
     <div className="terminals">
@@ -100,10 +116,9 @@ export function TerminalsView({
                 setRenameDraft(session.title)
               }}
             >
-              <span className={`tab-dot status-${session.status}`} />
               <span
-                className={`permission-dot mode-${session.permissions.mode}`}
-                title={`权限：${PERMISSION_MODE_LABELS[session.permissions.mode]}`}
+                className={`status-light ${statusClass(session)}`}
+                title={statusTitle(session)}
               />
               {renamingId === session.id ? (
                 <input
@@ -126,7 +141,7 @@ export function TerminalsView({
                   }}
                 />
               ) : (
-                <span className="tab-title">{session.title}</span>
+                <span className="tab-title">{sessionTitle(session)}</span>
               )}
               <button
                 type="button"

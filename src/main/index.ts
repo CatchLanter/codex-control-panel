@@ -17,6 +17,9 @@ let settingsStore: SettingsStore | null = null
 let codexSessionsStore: CodexSessionsStore | null = null
 let quitting = false
 const permissionScanBuffers = new Map<string, string>()
+const approvalWaiters = new Map<string, boolean>()
+const APPROVAL_PATTERN =
+  /(would you like to|waiting for approval|approve this|confirm this)/i
 
 const gotLock = app.requestSingleInstanceLock()
 
@@ -52,6 +55,14 @@ if (!gotLock) {
         const cleaned = combined
           .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, ' ')
           .replace(/\x1b\][^\x07]*\x07/g, ' ')
+        const waiting = APPROVAL_PATTERN.test(cleaned)
+        if (approvalWaiters.get(sessionId) !== waiting) {
+          approvalWaiters.set(sessionId, waiting)
+          win.webContents.send('terminal:approval', {
+            sessionId,
+            waiting,
+          })
+        }
         const match = cleaned.match(/Permissions updated to\s+([^\n\r•]+)/i)
         if (match) {
           const permissions = permissionFromCodexLabel(match[1].trim())

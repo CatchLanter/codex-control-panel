@@ -237,6 +237,11 @@ export default function App() {
     (s) => s.status === 'running',
   ).length
   const activePermissions = activeSession?.permissions ?? settings.permissions
+  const activeConversation = activeSession?.conversationId
+    ? conversationsStore.conversations.find(
+        (item) => item.id === activeSession.conversationId,
+      )
+    : undefined
 
   return (
     <div
@@ -280,6 +285,7 @@ export default function App() {
           <TerminalsView
             sessions={sessionsStore.sessions}
             conversations={conversationsStore.conversations}
+            waitingById={sessionsStore.waitingById}
             activeId={activeSession?.id ?? null}
             settings={settings}
             theme={settings.theme}
@@ -299,6 +305,12 @@ export default function App() {
             activeSession={activeSession}
             sessionModel={
               activeSession ? sessionModels[activeSession.id] : undefined
+            }
+            conversationTitle={activeConversation?.title}
+            waiting={
+              activeSession
+                ? sessionsStore.waitingById[activeSession.id]
+                : undefined
             }
             codex={codexStore.info}
             codexConfig={codexStore.config}

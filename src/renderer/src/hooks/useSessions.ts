@@ -11,6 +11,7 @@ import {
 export function useSessions(settings: AppSettings | null) {
   const [sessions, setSessions] = useState<SessionMeta[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [waitingById, setWaitingById] = useState<Record<string, boolean>>({})
   const sessionsRef = useRef<SessionMeta[]>([])
 
   useEffect(() => {
@@ -50,6 +51,15 @@ export function useSessions(settings: AppSettings | null) {
             : session,
         ),
       )
+    })
+  }, [])
+
+  useEffect(() => {
+    return window.api.onApprovalChanged(({ sessionId, waiting }) => {
+      setWaitingById((prev) => {
+        if (prev[sessionId] === waiting) return prev
+        return { ...prev, [sessionId]: waiting }
+      })
     })
   }, [])
 
@@ -184,6 +194,7 @@ export function useSessions(settings: AppSettings | null) {
     renameSession,
     setSessionPermission,
     restartSession,
+    waitingById,
     moveTab,
     runInActive,
   }

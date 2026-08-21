@@ -201,6 +201,11 @@ export interface TerminalModelPayload {
   effort: string
 }
 
+export interface TerminalApprovalPayload {
+  sessionId: string
+  waiting: boolean
+}
+
 export interface CodexPanelApi {
   sessions: {
     create: (opts: SessionCreateOptions) => Promise<SessionMeta>
@@ -264,4 +269,7 @@ export interface CodexPanelApi {
     cb: (payload: TerminalPermissionPayload) => void,
   ) => () => void
   onModelChanged: (cb: (payload: TerminalModelPayload) => void) => () => void
+  onApprovalChanged: (
+    cb: (payload: TerminalApprovalPayload) => void,
+  ) => () => void
 }

@@ -510,6 +510,38 @@
   background: var(--text-tertiary);
 }
 
+.status-light {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+
+.status-light.active {
+  background: var(--green);
+}
+
+.status-light.waiting {
+  background: var(--yellow);
+  animation: status-blink 0.9s ease-in-out infinite;
+}
+
+.status-light.exited {
+  background: var(--red);
+}
+
+@keyframes status-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
 .tab .permission-dot {
   width: 6px;
   height: 6px;
